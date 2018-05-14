@@ -8,16 +8,13 @@
 --data [a] = [] | a : [a]
 
 mapL :: (a -> b) -> [a] -> [b]
-mapL f [] = []
-mapL f (x:xs) = f x : mapL f xs
-
+mapL f = foldr (\ x y -> f x : y) []
 
 -- 2) 
 data Tree a = EmptyT | NodeT a (Tree a) (Tree a) deriving (Show)
 
 mapTree :: (a -> b) -> Tree a -> Tree b
-mapTree f EmptyT = EmptyT
-mapTree f (NodeT x tr1 tr2) = NodeT (f x) (mapTree f tr1) (mapTree f tr2)
+mapTree f = foldrT (\ x t1 t2 -> NodeT (f x) t1 t2) EmptyT
 
 
 -- 3) 
@@ -231,15 +228,6 @@ mapX (f.g) (C r1 r2)
 find :: (a -> Bool) -> [a] -> Maybe a
 find f xs = foldr (\ x y -> if f x then Just x else y) Nothing xs
 
-
-isJust :: Maybe a -> Bool
-isJust Nothing = False
-isJust (Just x) = True
-
-
-fromJust :: Maybe a -> a
-fromJust Nothing = error "no se puede tomar un elemento de Nothing"
-fromJust (Just x) = x
 
 --data Tree a = EmptyT | NodeT a (Tree a) (Tree a) 
 
