@@ -21,8 +21,7 @@ mapTree f = foldrT (\ x t1 t2 -> NodeT (f x) t1 t2) EmptyT
 data NonEmptyList a = Unit a | NECons a (NonEmptyList a) deriving (Show)
 
 mapNEL :: (a -> b) -> NonEmptyList a -> NonEmptyList b
-mapNEL f (Unit x) = Unit (f x)
-mapNEL f (NECons x nel) = NECons (f x) (mapNEL f nel) 
+mapNEL f = foldrNEL (\ x nel -> NECons (f x) nel) (\ z -> Unit (f z) )
 
 
 -- 4) 
