@@ -414,6 +414,16 @@ partitionT f = foldrT (\ x t1 t2 -> let ((l1,r1),(l2,r2)) = (t1,t2)
 
 
 
+-- data NonEmptyList a = Unit a | NECons a (NonEmptyList a) 
+
+partitionNEL :: (a -> Bool) -> NonEmptyList a -> ([a],[a])
+partitionNEL f = foldrNEL (\ x nel -> let (left, right) = nel 
+                             in if f x then ((x:left), right) else (left, (x:right)) ) (\ z -> if f z then ([z],[]) else ([],[z]) )
+
+
+
+
+
 
 
 
