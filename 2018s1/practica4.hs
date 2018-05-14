@@ -291,6 +291,22 @@ findTT f = foldrTT (\ tt1 tt2 -> dameJustSiPodes tt1 tt2) (\ z -> if f z then Ju
 
 
 
+-- data LTree a = L [a] | BL a (LTree a) (LTree a)
+
+findLT f = foldrLT (\ x lt1 lt2 -> if f x then Just x else dameJustSiPodes lt1 lt2) (\ xs -> find f xs)
+
+--data Either b a = Left b | Right a 
+
+findEither f = foldrEither (\ x -> if f x then Just x else Nothing) (\ e -> error e)
+
+foldrEither f g (Left x) = g x
+foldrEither f g (Right x) = f x
+
+
+-- MTree a = Lm (Maybe a) | Bm a (MTree a) (MTree a)
+
+findMT f = foldrMT (\ x mt1 mt2 -> if f x then Just x else dameJustSiPodes mt1 mt2) (\ m -> findMaybe f m)
+
 
 -------------------------------------------------------------------------------------------------------------
 
