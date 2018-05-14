@@ -448,8 +448,21 @@ partitionLT f = foldrLT (\ x lt1 lt2 -> let ((l1,r1),(l2,r2)) = (lt1,lt2)
                                     in if f x then ((x: l1 ++ l2), r1 ++ r2) else ((l1 ++ l2),(x: r1 ++ r2))  ) (\ xs -> partition f xs) 
 
 
+-- data Either b a = Left b | Right a 
+
+partitionEither :: (a -> Bool) -> Either b a -> ([a],[a])
+partitionEither f (Left x) = error ""
+partitionEither f (Right x) = if f x then ([x],[]) else ([],[x]) 
 
 
+-- data MTree a = Lm (Maybe a) | Bm a (MTree a) (MTree a)
 
+partitionMT :: (a -> Bool) -> MTree a -> ([a],[a]) 
+partitionMT f = foldrMT (\ x mt1 mt2 -> let ((l1,r1),(l2,r2)) = (mt1,mt2) 
+                                    in if f x then ((x: l1 ++ l2), r1 ++ r2) else ((l1 ++ l2),(x: r1 ++ r2))  )
+                                                                                                          (\ m -> partitionMaybe f m)
  
+
+
+
 
