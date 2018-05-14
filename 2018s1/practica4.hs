@@ -267,8 +267,8 @@ foldrNEL f g (NECons x nel) = x `f` (foldrNEL f g nel)
 
 -- data AppendList a = Nil | Unity a | Append (AppendList a) (AppendList a)
 
---findAppendL f appL = foldrAPPL (\ x y -> if f x then Just x else if f y then Just y else Nothing) 
---                               (\ z -> if f z then Just z else Nothing) Nothing appL
+findAppendL f = foldrAPPL (\ x y -> dameJustSiPodes x y) 
+                               (\ z -> if f z then Just z else Nothing) Nothing 
 
 
 foldrAPPL f g b Nil = b
@@ -276,13 +276,18 @@ foldrAPPL f g b (Unity x) = g x
 foldrAPPL f g b (Append ap1 ap2) = (foldrAPPL f g b ap1) `f` (foldrAPPL f g b ap2) 
 
 
+
 -- data Maybe a = Nothing | Just a 
 
---findMaybe :: (a -> Bool) -> Maybe a -> Maybe a
---findMaybe f m = foldrMaybe (\ x -> if f x then Just x else Nothing) Nothing m
+findMaybe :: (a -> Bool) -> Maybe a -> Maybe a
+findMaybe f = foldrMaybe (\ x -> if f x then Just x else Nothing) Nothing
 
+foldrMaybe f b Nothing = b
+foldrMaybe f b (Just x) = f x
 
+-- data T a = A a | B (T a) | C (T a) (T a)
 
+findTT f = foldrTT (\ tt1 tt2 -> dameJustSiPodes tt1 tt2) (\ z -> if f z then Just z else Nothing)
 
 
 
