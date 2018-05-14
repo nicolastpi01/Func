@@ -343,4 +343,46 @@ foldrTT f g (B t) = foldrTT f g t
 foldrTT f g (C t1 t2) = (foldrTT f g t1) `f` (foldrTT f g t2)
 
 
+-- data LTree a = L [a] | BL a (LTree a) (LTree a)
+
+anyLT, allLT :: (a -> Bool) -> LTree a -> Bool
+
+anyLT f = foldrLT (\ x lt1 lt2 -> f x || lt1 || lt2) (\ xs -> any f xs)
+
+allLT f = foldrLT (\ x lt1 lt2 -> f x && lt1 && lt2) (\ xs -> all f xs) 
+
+
+foldrLT f g (L xs) = g xs
+foldrLT f g (BL x lt1 lt2) = f x (foldrLT f g lt1) (foldrLT f g lt2)
+
+
+--data Either b a = Left b | Right a
+
+allEither, anyEither :: (a -> Bool) -> Either b a -> Bool
+
+allEither f (Left x) = error "error" 
+allEither f (Right x) = f x
+
+anyEither f (Left x) = error "error"
+anyEither f (Right x) = f x
+
+-- data MTree a = Lm (Maybe a) | Bm a (MTree a) (MTree a)
+
+
+anyMT, allMT :: (a -> Bool) -> MTree a -> Bool
+
+anyMT f = foldrMT (\ x mt1 mt2 -> f x || mt1 || mt2) (\ m -> anyMaybe f m) 
+
+allMT f = foldrMT (\ x mt1 mt2 -> f x && mt1 && mt2) (\ m -> allMaybe f m)
+
+
+foldrMT f g (Lm m) = g m
+foldrMT f g (Bm x mt1 mt2) = f x (foldrMT f g mt1) (foldrMT f g mt2)
+
+
+
+
+
+
+
 
