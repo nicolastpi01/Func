@@ -401,6 +401,16 @@ foldrMT f g (Lm m) = g m
 foldrMT f g (Bm x mt1 mt2) = f x (foldrMT f g mt1) (foldrMT f g mt2)
 
 
+-- 3) partition :: (a -> Bool) -> f a -> ([a], [a])
+
+partition :: (a -> Bool) -> [a] -> ([a],[a])
+partition f = foldr (\ x y -> let (left, right) = y in if f x then ((x:left), right) else (left, (x:right)) ) ([],[])
+
+
+
+
+
+
 
 
 
