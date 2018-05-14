@@ -407,9 +407,10 @@ partition :: (a -> Bool) -> [a] -> ([a],[a])
 partition f = foldr (\ x y -> let (left, right) = y in if f x then ((x:left), right) else (left, (x:right)) ) ([],[])
 
 
-
-
-
+-- data Tree a = EmptyT | NodeT a (Tree a) (Tree a) 
+partitionT :: (a -> Bool) -> Tree a -> ([a],[a])
+partitionT f = foldrT (\ x t1 t2 -> let ((l1,r1),(l2,r2)) = (t1,t2) 
+                                    in if f x then ((x: l1 ++ l2), r1 ++ r2) else ((l1 ++ l2),(x: r1 ++ r2)))  ([],[])
 
 
 
