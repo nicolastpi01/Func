@@ -64,16 +64,12 @@ mapEither f (Right y) = Left (f y)
 data MTree a = Lm (Maybe a) | Bm a (MTree a) (MTree a) deriving (Show)
 
 mapMTree :: (a -> b) -> (MTree a) -> (MTree b)
-mapMTree f (Lm maybe) = Lm (mapMaybe f maybe)
-mapMTree f (Bm x mt1 mt2) = Bm (f x) (mapMTree f mt1) (mapMTree f mt2)
+mapMTree f = foldrMT (\ x mt1 mt2 -> Bm (f x) mt1 mt2) (\ m -> Lm (mapMaybe f m))
 
 
 --10) (Desafío) --> (pendiente por ahora)
 
-data GenTree a = GNode a [GenTree a] deriving (Show)
-
---mapGenTree :: (a -> b) -> GenTree a -> GenTree b
---mapGenTree f (GNode x xs) = GNode (f x) (mapL f xs) 
+data GenTree a = GNode a [GenTree a] deriving (Show) 
 
 
 -- 1.2)
