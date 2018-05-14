@@ -429,8 +429,16 @@ partitionAPPL f = foldrAPPL (\ x y -> let ((l1,r1), (l2,r2)) = (x,y)
 
 
 
+-- data Maybe a = Nothing | Just a
+partitionMaybe :: (a -> Bool) -> Maybe a -> ([a],[a]) 
+partitionMaybe f = foldrMaybe (\ x -> if f x then ([x],[]) else ([],[x]) )  ([],[]) 
 
 
+-- data T a = A a | B (T a) | C (T a) (T a)
+partitionTT :: (a -> Bool) -> T a -> ([a],[a]) 
+partitionTT f = foldrTT (\ x y -> let ((l1,r1), (l2,r2)) = (x,y) 
+                                       in ((l1 ++ l2), (r1 ++ r2)) )
+                                       (\ z -> if f z then ([z],[]) else ([],[z]) )
 
 
 
