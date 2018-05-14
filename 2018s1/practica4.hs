@@ -271,19 +271,17 @@ foldrNEL f g (NECons x nel) = x `f` (foldrNEL f g nel)
 --                               (\ z -> if f z then Just z else Nothing) Nothing appL
 
 
---foldrAPPL f g y Nil = y
---foldrAPPL f g y (Unity x) = g x
---foldrAPPL f g y (Append ap1 ap2) = (foldrAPPL f g y ap1) `f` (foldrAPPL f g y ap2) 
-
+foldrAPPL f g b Nil = b
+foldrAPPL f g b (Unity x) = g x
+foldrAPPL f g b (Append ap1 ap2) = (foldrAPPL f g b ap1) `f` (foldrAPPL f g b ap2) 
 
 
 -- data Maybe a = Nothing | Just a 
 
-findMaybe :: (a -> Bool) -> Maybe a -> Maybe a
-findMaybe f m = foldrMaybe (\ x -> if f x then Just x else Nothing) Nothing m
+--findMaybe :: (a -> Bool) -> Maybe a -> Maybe a
+--findMaybe f m = foldrMaybe (\ x -> if f x then Just x else Nothing) Nothing m
 
-foldrMaybe f y Nothing = y
-foldrMaybe f y (Just x) = f x 
+
 
 
 
@@ -312,23 +310,37 @@ anyNEL f = foldrNEL (\ x y -> f x || y) (\ z -> f z)
 allNEL f = foldrNEL (\ x y -> f x && y) (\ z -> f z)
 
 
+-- data AppendList a = Nil | Unity a | Append (AppendList a) (AppendList a)
+
+anyAPPL, allAPPL :: (a -> Bool) -> AppendList a -> Bool
+
+anyAPPL f = foldrAPPL (\ x y -> x || y) (\ z -> f z) False
+
+allAPPL f = foldrAPPL (\ x y -> x && y) (\ z -> f z) True
 
 
+-- data Maybe a = Nothing | Just a 
+
+anyMaybe, allMaybe :: (a -> Bool) -> Maybe a -> Bool
+
+anyMaybe f Nothing = False
+anyMaybe f (Just x) = f x
+
+allMaybe f Nothing = True
+allMaybe f (Just x) = f x
 
 
+-- data T a = A a | B (T a) | C (T a) (T a) 
 
+anyTT, allTT :: (a -> Bool) -> T a -> Bool
 
+anyTT f = foldrTT (\ x y -> x || y) (\ z -> f z)
 
+allTT f = foldrTT (\ x y -> x && y) (\ z -> f z)
 
-
-
-
-
-
-
-
-
-
+foldrTT f g (A x) = g x
+foldrTT f g (B t) = foldrTT f g t
+foldrTT f g (C t1 t2) = (foldrTT f g t1) `f` (foldrTT f g t2)
 
 
 
