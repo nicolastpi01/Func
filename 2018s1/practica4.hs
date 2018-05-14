@@ -64,9 +64,9 @@ mapLTree f (BL x lt1 lt2) = BL (f x) (mapLTree f lt1) (mapLTree f lt2)
 -- 8)
 --data Either b a = Left b | Right a deriving (Show)
 
---mapEither :: (a -> b) -> Either b a -> Either a b
---mapEither f (Left x) = Right x
---mapEither f (Right y) = Left (f y)
+mapEither :: (a -> b) -> Either b a -> Either b a
+mapEither f (Left x) = Left x
+mapEither f (Right y) = Left (f y)
 
 
 -- 9) 
