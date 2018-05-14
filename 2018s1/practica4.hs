@@ -28,17 +28,13 @@ mapNEL f = foldrNEL (\ x nel -> NECons (f x) nel) (\ z -> Unit (f z) )
 data AppendList a = Nil | Unity a | Append (AppendList a) (AppendList a) deriving (Show)
 
 mapAppendL :: (a -> b) -> AppendList a -> AppendList b
-mapAppendL f Nil = Nil
-mapAppendL f (Unity x) = Unity (f x)
-mapAppendL f (Append ap1 ap2) = Append (mapAppendL f ap1) (mapAppendL f ap2)
-
+mapAppendL f = foldrAPPL (\ x y -> Append x y) (\ z -> Unity (f z) ) Nil 
 
 -- 5) 
 -- data Maybe a = Nothing | Just a deriving (Show)
 
 mapMaybe :: (a -> b) -> Maybe a -> Maybe b
-mapMaybe f Nothing = Nothing
-mapMaybe f (Just x) = Just (f x) 
+mapMaybe f = foldrMaybe (\ x -> Just (f x) ) Nothing 
 
 -- 6) 
 data T a = A a | B (T a) | C (T a) (T a) deriving (Show)
