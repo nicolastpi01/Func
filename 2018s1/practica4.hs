@@ -441,5 +441,15 @@ partitionTT f = foldrTT (\ x y -> let ((l1,r1), (l2,r2)) = (x,y)
                                        (\ z -> if f z then ([z],[]) else ([],[z]) )
 
 
+-- data LTree a = L [a] | BL a (LTree a) (LTree a)
 
+partitionLT :: (a -> Bool) -> LTree a -> ([a],[a])
+partitionLT f = foldrLT (\ x lt1 lt2 -> let ((l1,r1),(l2,r2)) = (lt1,lt2) 
+                                    in if f x then ((x: l1 ++ l2), r1 ++ r2) else ((l1 ++ l2),(x: r1 ++ r2))  ) (\ xs -> partition f xs) 
+
+
+
+
+
+ 
 
