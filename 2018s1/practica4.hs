@@ -221,16 +221,95 @@ mapX (f.g) (C r1 r2)
 
 -}
 
+-- 1.3)
+--Definir las siguientes funciones sobre los tipos algebraicos del punto 1, donde f es reemplazado por cada uno de dichos tipos:
+
+
+-- 1) 
+--data [a] = [] | a : [a]
+
+find :: (a -> Bool) -> [a] -> Maybe a
+find f xs = foldr (\ x y -> if f x then Just x else y) Nothing xs
+
+
+isJust :: Maybe a -> Bool
+isJust Nothing = False
+isJust (Just x) = True
+
+
+fromJust :: Maybe a -> a
+fromJust Nothing = error "no se puede tomar un elemento de Nothing"
+fromJust (Just x) = x
+
+--data Tree a = EmptyT | NodeT a (Tree a) (Tree a) 
+
+dameJustSiPodes :: Maybe a -> Maybe a -> Maybe a
+dameJustSiPodes (Just x) _ = Just x
+dameJustSiPodes _ (Just y) = Just y
+dameJustSiPodes _ _ = Nothing
+
+findT :: (a -> Bool) -> Tree a -> Maybe a
+findT f t = foldrT (\ x t1 t2 -> if f x then Just x else dameJustSiPodes t1 t2) Nothing t
+
+foldrT :: (a -> b -> b -> b) -> b -> Tree a -> b
+foldrT f y EmptyT = y
+foldrT f y (NodeT x t1 t2) = f x (foldrT f y t1) (foldrT f y t2)
+
+
+-- data NonEmptyList a = Unit a | NECons a (NonEmptyList a)
+
+findNEL f nel = foldrNEL (\ x y -> if f x then Just x else y) (\ z -> if f z then Just z else Nothing) nel
+
+
+foldrNEL f g (Unit x) = g x
+foldrNEL f g (NECons x nel) = x `f` (foldrNEL f g nel)
+
+
+-- data AppendList a = Nil | Unity a | Append (AppendList a) (AppendList a)
+
+--findAppendL f appL = foldrAPPL (\ x y -> if f x then Just x else if f y then Just y else Nothing) 
+--                               (\ z -> if f z then Just z else Nothing) Nothing appL
+
+
+--foldrAPPL f g y Nil = y
+--foldrAPPL f g y (Unity x) = g x
+--foldrAPPL f g y (Append ap1 ap2) = (foldrAPPL f g y ap1) `f` (foldrAPPL f g y ap2) 
+
+
+
+-- data Maybe a = Nothing | Just a 
+
+findMaybe :: (a -> Bool) -> Maybe a -> Maybe a
+findMaybe f m = foldrMaybe (\ x -> if f x then Just x else Nothing) Nothing m
+
+foldrMaybe f y Nothing = y
+foldrMaybe f y (Just x) = f x 
 
 
 
 
 
+-------------------------------------------------------------------------------------------------------------
 
+-- 2. any, all :: (a -> Bool) -> f a -> Bool
 
+any' f = foldr (\ x y -> f x || y) False
 
+all' f = foldr (\ x y -> f x && y) True
 
+anyT, allT :: (a -> Bool) -> Tree a -> Bool
 
+anyT f = foldrT (\ x t1 t2 -> f x || t1 || t2) False
+
+allT f = foldrT (\ x t1 t2 -> f x && t1 && t2) True 
+
+-- data NonEmptyList a = Unit a | NECons a (NonEmptyList a) 
+
+anyNEL, allNEL :: (a -> Bool) -> NonEmptyList a -> Bool 
+
+anyNEL f = foldrNEL (\ x y -> f x || y) (\ z -> f z)
+
+allNEL f = foldrNEL (\ x y -> f x && y) (\ z -> f z)
 
 
 
