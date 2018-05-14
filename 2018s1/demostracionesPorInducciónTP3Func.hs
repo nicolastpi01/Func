@@ -1402,13 +1402,60 @@ HI) last hs = head (reverse hs)
 TI) last (h:hs) = head (reverse (h:hs))
 
 head (reverse (h:hs))
-                            = def reverse
+                                 = def reverse
 head (reverse hs ++ [h])
-                            = 
+                                 = lema nuevo
+head (reverse hs)
+                                 = HI
+last hs
+                                 = def last
+last (h:hs)
 
 
+--                   QED
 
-ERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERROR
+DEMOSTRACIÓN (LEMA NUEVO)
+
+lema nuevo : head (reverse hs ++ [h]) = head (reverse hs)
+
+Demuestro por inducción estructural en hs
+
+Caso base, hs = (s:[])
+
+head (reverse (s:[]))
+                         = def reverse
+head (reverse [] ++ [s])
+                         = def reverse
+head ([] ++ [s])
+                         = def (++)
+head [s]
+                         = def head
+s
+
+head (reverse (s:[]) ++ [h]) 
+                                       = def reverse
+head ( (reverse [] ++ [s]) ++ [h] )
+                                       = def reverse
+head ( ([] ++ [s]) ++ [h] )
+                                       = def (++)
+head ( [s] ++ [h] )
+                                       = def (++)
+head ( (s:[]) ++ [h] )
+                                       = def (++)
+head (s : (++) [] [h] )
+                                       = def head
+s
+
+Caso inductivo, hs = (z:zs)
+
+HI) head (reverse zs ++ [h]) = head (reverse zs)
+TI) head (reverse (z:zs) ++ [h]) = head (reverse (z:zs))
+
+head (reverse (z:zs))
+                           = def reverse
+head (reverse zs ++ [z])
+                           = 
+
 
 --1) lema : reverse (xs ++ ys) = reverse ys ++ reverse xs
 --2) lema : length (xs ++ ys) = length xs + length ys
@@ -1427,7 +1474,6 @@ ERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERROR
 --(++) :: [a] -> [a] -> [a]
 --(++) [] ys = ys
 --(++) (x:xs) ys = x : (++) xs ys
-
 
 
 ----------------------------------------------------------------------------------------------
