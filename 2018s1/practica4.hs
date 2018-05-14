@@ -422,6 +422,13 @@ partitionNEL f = foldrNEL (\ x nel -> let (left, right) = nel
 
 
 
+-- data AppendList a = Nil | Unity a | Append (AppendList a) (AppendList a)
+partitionAPPL :: (a -> Bool) -> AppendList a -> ([a],[a]) 
+partitionAPPL f = foldrAPPL (\ x y -> let ((l1,r1), (l2,r2)) = (x,y) 
+                                       in ((l1 ++ l2), (r1 ++ r2)) ) (\ z -> if f z then ([z],[]) else ([],[z]) )  ([],[])
+
+
+
 
 
 
