@@ -49,8 +49,7 @@ mapT f (C t1 t2) = C (mapT f t1) (mapT f t2)
 data LTree a = L [a] | BL a (LTree a) (LTree a) deriving (Show)
 
 mapLTree :: (a -> b) -> LTree a -> LTree b
-mapLTree f (L xs) = L (mapL f xs)
-mapLTree f (BL x lt1 lt2) = BL (f x) (mapLTree f lt1) (mapLTree f lt2)
+mapLTree f = foldrLT (\ x lt1 lt2 -> BL (f x) lt1 lt2) (\ xs -> L (mapL f xs) )
 
 
 -- 8)
