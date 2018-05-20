@@ -9,7 +9,6 @@ sumT :: Tree Int -> Int
 sumT EmptyT = 0
 sumT (NodeT x t1 t2) = x + (sumT t1) + (sumT t2) 
 
-
 sizeT :: Tree a -> Int
 sizeT EmptyT = 0
 sizeT (NodeT x t1 t2) = 1 + (sizeT t1) + (sizeT t2)
@@ -79,7 +78,6 @@ listInOrder (NodeT x t1 t2) = listInOrder t1 ++ [x] ++ listInOrder t2
 listPreOrder :: Tree a -> [a]
 listPreOrder EmptyT = []
 listPreOrder (NodeT x t1 t2) = x : listPreOrder t1 ++ listPreOrder t2
-
 
 listPosOrder :: Tree a -> [a]
 listPosOrder EmptyT = []
