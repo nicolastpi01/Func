@@ -102,8 +102,6 @@ specialZipWith f (x:xs) (y:ys) = f x y : specialZipWith f xs ys
 listPerLevel :: Tree a -> [[a]]
 listPerLevel EmptyT = []
 listPerLevel (NodeT x EmptyT EmptyT) = [[x]]
-listPerLevel (NodeT x EmptyT t2) = [x] : listPerLevel t2
-listPerLevel (NodeT x t1 EmptyT) = [x] : listPerLevel t1
 listPerLevel (NodeT x t1 t2) = [x] : specialZipWith (++) (listPerLevel t1) (listPerLevel t2)
 
 

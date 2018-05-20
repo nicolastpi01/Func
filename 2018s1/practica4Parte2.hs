@@ -193,6 +193,9 @@ recrT f y (NodeT x t1 t2) = f x t1 t2 (recrT f y t1) (recrT f y t2)
 countLeaves :: Tree a -> Int
 countLeaves = recrT (\ x t1 t2 r1 r2 -> if isEmptyT t1 && isEmptyT t2 then 1 + r1 + r2 else r1 + r2) 0
 
+countNoLeaves :: Tree a -> Int
+countNoLeaves = recrT (\ x t1 t2 r1 r2 -> if isEmptyT t1 && isEmptyT t2 then 0 else 1 + r1 + r2) 0 
+
 leaves :: Tree a -> [a]
 leaves = recrT (\ x t1 t2 r1 r2 -> if isEmptyT t1 && isEmptyT t2 then [x] ++ r1 ++ r2 else r1 ++ r2) []
 
@@ -214,8 +217,6 @@ listPosOrder = foldrT (\ x r1 r2 -> r1 ++ r2 ++ [x]) []
 concatT :: Num a => Tree [a] -> [a]
 concatT = foldrT (\ x r1 r2 -> r1 ++ x ++ r2) []
 
---LEVELN, LISTPERLEVEL, COUNTNOLEAVES ?
-
 leftBranches :: Tree a -> [a]
 leftBranches = recrT (\ x t1 t2 r1 r2 -> if isEmptyT t1 then [] else root t1 : r1) [] where root (NodeT x t1 t2) = x
 
@@ -225,6 +226,98 @@ longestBranch = foldrT (\ x r1 r2 -> let (xs,ys) = (r1,r2) in if length xs >= le
 
 allPaths :: Tree a -> [[a]]
 allPaths = recrT (\ x t1 t2 r1 r2 -> if isEmptyT t1 && isEmptyT t2 then [[x]] else map (x:) r1 ++ map (x:) r2) []
+
+
+--Necesario para listPerLevel
+specialZipWith :: (a -> a -> a) -> [a] -> [a] -> [a]
+specialZipWith f [] [] = []
+specialZipWith f xs [] = xs
+specialZipWith f [] ys = ys
+specialZipWith f (x:xs) (y:ys) = f x y : specialZipWith f xs ys 
+
+listPerLevel :: Tree a -> [[a]]
+listPerLevel = recrT (\ x t1 t2 r1 r2 -> if isEmptyT t1 && isEmptyT t2 then [[x]] else [x] : specialZipWith (++) r1 r2) []
+
+levelN :: Int -> Tree a -> [a]
+levelN m t = foldrT g (\_ -> []) t m
+             where g x r1 r2 n = if n == 0
+                                 then [x]
+                                 else r1 (n-1) ++ r2 (n-1) 
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------------------
+
+--                                                      DEMOSTRACIONES (Todo lo comentado)
+
+-- Demostrar las siguientes equivalencias y propiedades, comparando la implementación sin fold
+-- para todas las funciones) :
+
+-- 4.1, 4.2, 4.3 y 4.4.
+
+
+-- 1) concat = foldr (++) []
+--                                = ppio extensionalidad
+-- concat xss = foldr (++) [] xss
+
+-- Demuestro por induccion estructural en xss:
+
+-- Caso base, xss = []
+
+-- concat []
+--           = def concat
+-- []
+
+-- foldr (++) [] []
+--                 = def foldr
+-- []
+
+-- Caso inductivo, xss = (hs:hss)
+
+-- HI) concat hss = foldr (++) [] hss 
+-- TI) concat (hs:hss) = foldr (++) [] (hs:hss)
+
+-- foldr (++) [] (hs:hss)
+--                             = def foldr
+-- (++) hs (foldr (++) [] hss)
+--                             = HI
+-- (++) hs (concat hss)
+--                             = def (++)
+--hs ++ (concat hss)
+--                             = def concat (al revés)
+--concat (hs:hss)
+
+--                  QED
+
+
+--foldr :: (a -> b -> b) -> b -> [a] -> b
+--foldr f z [] = z
+--foldr f z (x:xs) = f x (foldr f z xs)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
