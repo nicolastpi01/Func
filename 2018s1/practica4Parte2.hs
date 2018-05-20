@@ -22,8 +22,6 @@ recr' f z (x:xs) =
 -- que se detuvo mucho tiempo en encontrar una solución.
 
 
--- foldr :: (a -> b -> b) -> b -> [a] -> b
-
 head' :: [a] -> a
 head' = foldr const (error "la lista esta vacia")
 
@@ -118,11 +116,11 @@ reverse' :: [a] -> [a]
 reverse' = foldr (\ x r -> r ++ [x]) []
 
 
---takeWhile', dropWhile' :: (a -> Bool) -> [a] -> [a]
+takeWhile', dropWhile' :: (a -> Bool) -> [a] -> [a]
 
 takeWhile' p = foldr (\ x r -> if p x then x:r else []) []
 
---dropWhile' p = recr' (\ x xs r -> if p x then r else xs) []
+dropWhile' p = recr' (\ x xs r -> if p x then r else x:xs) []
 
 
 --SPAN, BREAK, ZIPWITH, ZIPAPPLY, INDEX, APPLYN, ITERATE, NATS, CYCLE, NUBBY, DROPWHILE
@@ -315,7 +313,7 @@ levelN m t = foldrT g (\_ -> []) t m
 -- ((:) . f) h (foldr ((:) . f) [] hs)
 --                                      = HI
 -- ((:) . f) h (map f hs)
-                                      = def (.)
+--                                      = def (.)
 -- (:) (f h) (map f hs)
 --                                      = def (:)
 -- f h : map f hs
