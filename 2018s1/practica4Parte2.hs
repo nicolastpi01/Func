@@ -199,10 +199,6 @@ leaves = recrT (\ x t1 t2 r1 r2 -> if isEmptyT t1 && isEmptyT t2 then [x] ++ r1 
 heightT :: Tree a -> Int
 heightT = foldrT (\ x r1 r2 -> 1 + max r1 r2) 0
 
-
--- COUNTNOLEAVES ?
-
-
 mirrorT :: Tree a -> Tree a
 mirrorT = foldrT (\ x r1 r2 -> NodeT x r2 r1) EmptyT
 
@@ -216,8 +212,21 @@ listPosOrder :: Tree a -> [a]
 listPosOrder = foldrT (\ x r1 r2 -> r1 ++ r2 ++ [x]) []
 
 concatT :: Num a => Tree [a] -> [a]
-concatT EmptyT = []
-concatT (NodeT x t1 t2) = (concatT t1) ++ x ++ (concatT t2) 
+concatT = foldrT (\ x r1 r2 -> r1 ++ x ++ r2) []
+
+--LEVELN, LISTPERLEVEL, COUNTNOLEAVES ?
+
+leftBranches :: Tree a -> [a]
+leftBranches = recrT (\ x t1 t2 r1 r2 -> if isEmptyT t1 then [] else root t1 : r1) [] where root (NodeT x t1 t2) = x
+
+
+longestBranch :: Tree a -> [a]
+longestBranch = foldrT (\ x r1 r2 -> let (xs,ys) = (r1,r2) in if length xs >= length ys then x:xs else x:ys) [] 
+
+allPaths :: Tree a -> [[a]]
+allPaths = recrT (\ x t1 t2 r1 r2 -> if isEmptyT t1 && isEmptyT t2 then [[x]] else map (x:) r1 ++ map (x:) r2) []
+
+
 
 
 

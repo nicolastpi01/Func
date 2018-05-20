@@ -107,22 +107,16 @@ listPerLevel (NodeT x t1 EmptyT) = [x] : listPerLevel t1
 listPerLevel (NodeT x t1 t2) = [x] : specialZipWith (++) (listPerLevel t1) (listPerLevel t2)
 
 
-
 widthT :: Ord a => Tree a -> Int
 widthT = length . maximum . listPerLevel  
-
-
 
 leftBranches :: Tree a -> [a]
 leftBranches EmptyT = []
 leftBranches (NodeT x EmptyT _) = []
 leftBranches (NodeT x t1@(NodeT y _ _) _) = y : leftBranches t1   
 
-
 longestBranch :: Tree a -> [a]
 longestBranch EmptyT = []
-longestBranch (NodeT x EmptyT t@(NodeT x1 t1 t2)) = x : (longestBranch t) 
-longestBranch (NodeT x t@(NodeT x1 t1 t2) EmptyT) = x : (longestBranch t)
 longestBranch (NodeT x t1 t2) = let (xss,yss) = (longestBranch t1,longestBranch t2) 
                                                      in if length xss >= length yss then x:xss else x:yss
 
@@ -131,8 +125,6 @@ longestBranch (NodeT x t1 t2) = let (xss,yss) = (longestBranch t1,longestBranch 
 allPaths :: Tree a -> [[a]]
 allPaths EmptyT = []
 allPaths (NodeT x EmptyT EmptyT) = [[x]]
-allPaths (NodeT x t1 EmptyT) = map (x:) (allPaths t1)
-allPaths (NodeT x EmptyT t2) = map (x:) (allPaths t2)
 allPaths (NodeT x t1 t2) = map (x:) (allPaths t1) ++ map (x:) (allPaths t2)
  
 
