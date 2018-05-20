@@ -291,9 +291,48 @@ levelN m t = foldrT g (\_ -> []) t m
 --                  QED
 
 
---foldr :: (a -> b -> b) -> b -> [a] -> b
---foldr f z [] = z
---foldr f z (x:xs) = f x (foldr f z xs)
+-- 2) map f = foldr ((:) . f) []
+--                                   = ppio extensionalidad
+-- map f xs = foldr ((:) . f) [] xs
+
+-- Demuestro por inducción estructural
+
+-- Caso base, xs = []
+
+-- map f []
+--           = def map
+-- []
+
+-- foldr ((:) . f) [] []
+--                        = def foldr
+-- []
+
+-- Caso inductivo, xs = (h:hs)
+
+-- HI) map f hs = foldr ((:) . f) [] hs
+-- TI) map f (h:hs) = foldr ((:) . f) [] (h:hs)
+
+-- foldr ((:) . f) [] (h:hs)
+--                                      = def foldr
+-- ((:) . f) h (foldr ((:) . f) [] hs)
+--                                      = HI
+-- ((:) . f) h (map f hs)
+                                      = def (.)
+-- (:) (f h) (map f hs)
+--                                      = def (:)
+-- f h : map f hs
+--                                      = def map (al revés)
+-- map f (h:hs)
+
+--                  QED
+
+
+
+3) foldr f z (xs ++ ys) = foldr f (foldr f z ys) xs
+
+foldr :: (a -> b -> b) -> b -> [a] -> b
+foldr f z [] = z
+foldr f z (x:xs) = f x (foldr f z xs)
 
 
 
