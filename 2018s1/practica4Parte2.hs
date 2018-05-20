@@ -254,8 +254,6 @@ levelN m t = foldrT g (\_ -> []) t m
 -- Demostrar las siguientes equivalencias y propiedades, comparando la implementación sin fold
 -- para todas las funciones) :
 
--- 4.1, 4.2, 4.3 y 4.4.
-
 
 -- 1) concat = foldr (++) []
 --                                = ppio extensionalidad
@@ -295,7 +293,7 @@ levelN m t = foldrT g (\_ -> []) t m
 --                                   = ppio extensionalidad
 -- map f xs = foldr ((:) . f) [] xs
 
--- Demuestro por inducción estructural
+-- Demuestro por inducción estructural en xs
 
 -- Caso base, xs = []
 
@@ -330,9 +328,68 @@ levelN m t = foldrT g (\_ -> []) t m
 
 3) foldr f z (xs ++ ys) = foldr f (foldr f z ys) xs
 
+Demuestro por inducción estructural en xs
+
+Caso base, xs = []
+
 foldr :: (a -> b -> b) -> b -> [a] -> b
 foldr f z [] = z
 foldr f z (x:xs) = f x (foldr f z xs)
+
+.
+.
+.
+.
+.
+
+
+-- 4) foldr f z . foldr (:) [] = foldr f z
+--                                               = ppio extensionalidad
+-- (foldr f z . foldr (:) [] ) xs = foldr f z xs
+
+-- Demuestro por inducción estructural en xs
+
+-- Caso base, xs = []
+
+-- (foldr f z . foldr (:) [] ) []
+--                                   = def (.)
+-- foldr f z (foldr (:) [] [])
+--                                   = def foldr
+-- foldr f z []
+--                                   = def foldr
+-- []
+
+
+-- foldr f z []
+--                  = def foldr
+-- []
+
+-- Caso inductivo, xs = (h:hs)
+
+-- HI) (foldr f z . foldr (:) [] ) hs = foldr f z hs
+-- TI) (foldr f z . foldr (:) [] ) (h:hs) = foldr f z (h:hs)
+
+-- foldr f z (h:hs)
+--                                       = def foldr
+-- f h (foldr f z hs)
+--                                       = HI
+-- f h (foldr f z . foldr (:) [] ) hs
+--                                       = def foldr (al revés)
+-- (foldr f z . foldr (:) [] ) (h:hs)
+
+--                       QED
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
