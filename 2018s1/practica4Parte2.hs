@@ -326,21 +326,34 @@ levelN m t = foldrT g (\_ -> []) t m
 
 
 
-3) foldr f z (xs ++ ys) = foldr f (foldr f z ys) xs
+-- 3) foldr f z (xs ++ ys) = foldr f (foldr f z ys) xs
 
-Demuestro por inducción estructural en xs
+-- Demuestro por inducción estructural en xs
 
-Caso base, xs = []
+-- Caso base, xs = []
 
-foldr :: (a -> b -> b) -> b -> [a] -> b
-foldr f z [] = z
-foldr f z (x:xs) = f x (foldr f z xs)
+-- foldr f z ([] ++ ys)
+--                       = def (++)
+-- foldr f z ys
 
-.
-.
-.
-.
-.
+-- foldr f (foldr f z ys) []
+--                            = def foldr
+-- foldr f z ys
+
+-- Caso inductivo, xs = (h:hs)
+
+-- HI) foldr f z (hs ++ ys) = foldr f (foldr f z ys) hs
+-- TI) foldr f z ((h:hs) ++ ys) = foldr f (foldr f z ys) (h:hs)
+
+-- foldr f (foldr f z ys) (h:hs)
+--                                  = def foldr
+-- f h (foldr f (foldr f z ys) hs)
+--                                  = HI
+-- f h (foldr f z (hs ++ ys))
+--                                  = def foldr (al revés)
+-- foldr f z ((h:hs) ++ ys)
+
+--                     QED
 
 
 -- 4) foldr f z . foldr (:) [] = foldr f z
