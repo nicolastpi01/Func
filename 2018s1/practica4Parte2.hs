@@ -134,7 +134,7 @@ unzip' :: [(a,b)] -> ([a],[b])
 unzip' = foldr (\ x r -> let (xs,ys) = r in ((fst x) : xs, (snd x) : ys)) ([],[])
 
 take' :: Int -> [a] -> [a]
-take' m xs = foldr g (\_ -> []) xs m
+take' m xs = foldr g (const []) xs m
              where g x r n = if n == 0
                              then []
                              else x : r (n-1)
@@ -146,9 +146,21 @@ take' m xs = foldr g (\_ -> []) xs m
                              else r (n-1)
 
 
+zip' :: [a] -> [b] -> [(a,b)]
+zip' xs ys = foldr g (const []) xs ys
+   where
+   g x r [] = []
+   g x r (y:ys) = (x,y) : r ys
+
+zipWith' :: (a -> b -> c) -> [a] -> [b] -> [c]
+zipWith' f xs ys = foldr g (const []) xs ys
+   where
+   g x r [] = []
+   g x r (y:ys) = f x y : r ys
 
 
--- (pedidos por Fede) ZIPWITH (recorridos sobre dos listas), ZIP(recorridos sobre dos listas), NUBBY, DROP (esta en el mail)
+
+-- (pedidos por Fede) NUBBY, DROP (esta en el mail)
  
 -- (No pedidos) ZIPAPPLY, INDEX, AGRUPAR, SPLIT AT (esta en el mail)
 
