@@ -28,6 +28,9 @@ head' = foldr const (error "la lista esta vacia")
 tail' :: [a] -> [a]
 tail' = recr' (\ x xs r -> xs) (error "La lista esta vacia")
 
+null' :: [a] -> Bool
+null' = foldr (\ x r -> False) True
+
 sum', product' :: Num a => [a] -> a
 
 sum' = foldr (+) 0
@@ -118,6 +121,9 @@ isJust :: Maybe a -> Bool
 isJust Nothing = False
 isJust (Just x) = True
 
+find :: (a -> Bool) -> [a] -> Maybe a
+find p = foldr (\ x r -> if p x then Just x else r) Nothing
+
 findIndex :: (a -> Bool) -> [a] -> Maybe Int
 findIndex p = foldr (\ x r -> let m = r
                      in if p x then Just 0
@@ -158,14 +164,23 @@ zipWith' f xs ys = foldr g (const []) xs ys
    g x r [] = []
    g x r (y:ys) = f x y : r ys
 
+delete :: Eq a => a -> [a] -> [a]
+delete y = foldr (\ x r -> if x == y then r else x:r) []
+
+nub :: (Eq a) => [a] -> [a]
+nub = recr' (\ x xs r -> if elem x xs then r else x:r) []
+
+snoc :: [a] -> a -> [a]
+snoc xs y = foldr (\ x r -> x:r) [y] xs
 
 
--- (pedidos por Fede) NUBBY, DROP (esta en el mail)
- 
--- (No pedidos) ZIPAPPLY, INDEX, AGRUPAR, SPLIT AT (esta en el mail)
-
-
-
+-- (Pendientes)     
+-- DROPN (esta en el mail)
+-- SPLIT AT (esta en el mail)
+-- CONCATMAP
+-- GROUPBY (AGRUPAR)
+-- ISPREFIXOF
+-- NUBBY (sacar rep en base a un p)
 
 --                                                          ÁRBOLES
 
