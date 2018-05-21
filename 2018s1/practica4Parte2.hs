@@ -62,23 +62,11 @@ subset xs ys = foldr (\ y r -> y `elem` ys && r) True xs
 concat' :: [[a]] -> [a]
 concat' = foldr (++) []
 
---(!!¿) :: Num a => [a] -> Int -> a
---(!!¿) [] n = error "La lista no tiene dimensión n" 
---(!!¿) (x:_) 0 = x 
---(!!¿) (x:xs) n = xs !!¿ (n-1)
-
--- ERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERRORERROR
-
--- DROP, ZIP, SPLIT AT, TAKE, 
-
 maximum', minimum' :: Ord a => [a] -> a
 
 maximum' = foldr1 max 
 
 minimum' = foldr1 min 
-
-
--- UNZIP.....
 
 lookup' :: Eq a => a -> [(a,b)] -> Maybe b
 lookup' x = foldr f Nothing
@@ -122,9 +110,6 @@ takeWhile' p = foldr (\ x r -> if p x then x:r else []) []
 
 dropWhile' p = recr' (\ x xs r -> if p x then r else x:xs) []
 
-
---SPAN, BREAK, ZIPWITH, ZIPAPPLY, INDEX, APPLYN, ITERATE, NATS, CYCLE, NUBBY, DROPWHILE
-
 fromJust :: Maybe a -> a
 fromJust Nothing = error "No tiene elemento"
 fromJust (Just x) = x
@@ -139,14 +124,13 @@ findIndex p = foldr (\ x r -> let m = r
                         else if isJust m then Just (fromJust m + 1) else r) Nothing
 
 
---agrupar :: Eq a => [a] -> [[a]]
---agrupar [] = []
---agrupar [x] = [[x]]
---agrupar (x:xs) = let (ys:yss) = agrupar xs
---                               in if elem' x ys then (x:ys):yss else [x] : agrupar xs
+--ZIPWITH, ZIPAPPLY, INDEX, APPLYN, ITERATE, NATS, CYCLE, NUBBY, AGRUPAR, DROP, ZIP, SPLIT AT, TAKE, UNZIP, (!!)
 
---agrupar = recr' (\ x xs r -> let (ys:yss) = r in if elem x ys then ((x:ys):yss) else ([x] : (ys:yss)) ) []
+span' :: (a -> Bool) -> [a] -> ([a],[a])
+span' p = recr' (\ x xs r -> let (rs,ys) = r in if p x then (x:rs,ys) else ([],x:xs)) ([],[])
 
+break'' :: (a -> Bool) -> [a] -> ([a], [a])
+break' p = recr' (\ x xs r -> let (rs,ys) = r in if not (p x) then (x:rs,ys) else ([],x:xs)) ([],[])
 
 
 
