@@ -124,13 +124,34 @@ findIndex p = foldr (\ x r -> let m = r
                         else if isJust m then Just (fromJust m + 1) else r) Nothing
 
 
---ZIPWITH, ZIPAPPLY, INDEX, APPLYN, ITERATE, NATS, CYCLE, NUBBY, AGRUPAR, DROP, ZIP, SPLIT AT, TAKE, UNZIP, (!!)
-
 span' :: (a -> Bool) -> [a] -> ([a],[a])
 span' p = recr' (\ x xs r -> let (rs,ys) = r in if p x then (x:rs,ys) else ([],x:xs)) ([],[])
 
-break'' :: (a -> Bool) -> [a] -> ([a], [a])
+break' :: (a -> Bool) -> [a] -> ([a], [a])
 break' p = recr' (\ x xs r -> let (rs,ys) = r in if not (p x) then (x:rs,ys) else ([],x:xs)) ([],[])
+
+unzip' :: [(a,b)] -> ([a],[b])
+unzip' = foldr (\ x r -> let (xs,ys) = r in ((fst x) : xs, (snd x) : ys)) ([],[])
+
+take' :: Int -> [a] -> [a]
+take' m xs = foldr g (\_ -> []) xs m
+             where g x r n = if n == 0
+                             then []
+                             else x : r (n-1)
+
+(!!¿) :: [a] -> Int -> a
+(!!¿) xs m = foldr g (\_ -> error "índice demasiado alto") xs m
+             where g x r n = if n == 0
+                             then x
+                             else r (n-1)
+
+
+
+
+-- (pedidos por Fede) ZIPWITH (recorridos sobre dos listas), ZIP(recorridos sobre dos listas), NUBBY, DROP (esta en el mail)
+ 
+-- (No pedidos) ZIPAPPLY, INDEX, AGRUPAR, SPLIT AT (esta en el mail)
+
 
 
 
