@@ -176,11 +176,10 @@ snoc xs y = foldr (\ x r -> x:r) [y] xs
 nubBy :: (a -> a -> Bool) -> [a] -> [a]
 nubBy p = recr' (\ x xs r -> if null xs then [x] else if p x (head xs) then r else x:r) []
 
-isPrefixOf :: Eq a => [a] -> [a] -> Bool
-isPrefixOf ys = foldr (\ x r -> elem x ys && r) True
-
 concatMap' :: (a -> [b]) -> [a] -> [b]
 concatMap' p = foldr (\ x r -> p x ++ r) []
+
+
 
 -- (Pendientes)     
 -- DROPN (esta en el mail)
