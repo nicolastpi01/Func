@@ -184,17 +184,15 @@ listPerLevelTT' = foldTT (\ x r1 r2 r3 -> [x] : specialZipWith (++) (specialZipW
 -- sum (leavesTT (Branch x t1 t2 t3)) = sumTT (Branch x t1 t2 t3)
 
 -- sumTT (Branch x t1 t2 t3)
---                                                                    = def sumTT
+--                                                                     = def sumTT
 -- x + (sumTT t1) + (sumTT t2) + (sumTT t3)
---                                                                    = HI 1) 2) 3)
+--                                                                     = HI 1) 2) 3)
 -- x + (sum (leavesTT t1)) + (sum (leavesTT t2)) + (sum (leavesTT t3)) 
+--                                                                     = def sum (al revés)
+-- sum (leavesTT (Branch x t1 t2 t3))
 
 
-
-                                                               
-
--- INCOMPLETO!!!!
-
+--                      INCOMPLETO
 
 
 --c) sizeTT . mapTT f . mapTT g = sizeTT . mapTT (f . g)
@@ -242,7 +240,7 @@ listPerLevelTT' = foldTT (\ x r1 r2 r3 -> [x] : specialZipWith (++) (specialZipW
 --                                                                                                         = def sizeTT (al revés)
 -- (sizeTT (mapTT f (mapTT g (Branch x t1 t2 t3))))
 
---                                              QED 
+--                                    QED 
 
 
 -- d ) maximum . leavesTT = maxTT
@@ -273,16 +271,15 @@ listPerLevelTT' = foldTT (\ x r1 r2 r3 -> [x] : specialZipWith (++) (specialZipW
 -- 3) maximum (leavesTT t3) = maxTT t3
 -- TI) maximum (leavesTT (Branch x t1 t2 t3)) = maxTT (Branch x t1 t2 t3)
 
--- maxTT (Branch x t1 t2 t3)
---                                                                                                  = def maxTT
--- max x (max (maxTT t1) (max (maxTT t2) (maxTT t3)))
---                                                                                                  = HI 1) 2) 3)
--- max x (max (maximum (leavesTT t1))) (max (maximum (leavesTT t2))) (max (maximum (leavesTT t3)))
- 
+
+-- maximum (leavesTT (Branch x t1 t2 t3))
+--                                                                   = def leavesTT
+--maximum ([x] ++ (leavesTT t1) ++ (leavesTT t2) ++ (leavesTT t3))
+--                                                                   = def maximum
+--x `max` maximum ((leavesTT t1) ++ (leavesTT t2) ++ (leavesTT t3))
 
 
-
-
+--                                INCOMPLETO
 
 
 
