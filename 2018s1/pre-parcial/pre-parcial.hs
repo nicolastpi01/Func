@@ -41,19 +41,17 @@ levelNTT 0 (Branch x t1 t2 t3) = [x]
 levelNTT n (Branch x t1 t2 t3) = (levelNTT (n-1) t1) ++ (levelNTT (n-1) t2) ++ (levelNTT (n-1) t3)  
 
 
---listPerLevelTT :: ThreeT a -> [[a]]
---listPerLevelTT (Leaf x) = [[x]]
---listPerLevelTT (Branch x t1 t2 t3) = [x] : specialZipWith (++) (specialZipWith (++) (listPerLevelTT t1) (listPerLevelTT t2)) (listPerLevelTT t3)
+listPerLevelTT :: ThreeT a -> [[a]]
+listPerLevelTT (Leaf x) = [[x]]
+listPerLevelTT (Branch x t1 t2 t3) = [x] : specialZipWith (++) (specialZipWith (++) (listPerLevelTT t1) (listPerLevelTT t2)) (listPerLevelTT t3)
                                      
 
-
 --Necesario para listPerLevelTT
---specialZipWith :: (a -> a -> a) -> [a] -> [a] -> [a]
---specialZipWith f [] [] = []
---specialZipWith f xs [] = xs
---specialZipWith f [] ys = ys
---specialZipWith f (x:xs) (y:ys) = f x y : specialZipWith f xs ys 
-
+specialZipWith :: (a -> a -> a) -> [a] -> [a] -> [a]
+specialZipWith f [] [] = []
+specialZipWith f xs [] = xs
+specialZipWith f [] ys = ys
+specialZipWith f (x:xs) (y:ys) = f x y : specialZipWith f xs ys 
 
 
 ------------------------------------------------------------------------------------------------------------------------------------------
