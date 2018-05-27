@@ -88,8 +88,14 @@ findTT' f = foldTT (\ (x,y) r1 r2 r3 -> if f x then Just y else g r1 r2 r3) (\ (
                                                                 g m1 m2 m3 = Nothing 
                                                                                  
 
---levelNTT' :: Int -> ThreeT a -> [a]
---levelNTT' m = foldTT (\ x r1 r2 r3 -> Branch (f x) r1 r2 r3) (\ y -> Leaf (f y))
+levelNTT' :: Int -> ThreeT a -> [a]
+levelNTT' m t = foldTT g h t m
+                 where g x r1 r2 r3 n = if n == 0
+                                        then [x]
+                                        else r1 (n-1) ++ r2 (n-1) ++ r3 (n-1)
+                       h x n = if n == 0 
+                               then [x] 
+                               else []  
 
 
 --listPerLevelTT' :: ThreeT a -> [[a]]
