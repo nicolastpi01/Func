@@ -98,8 +98,8 @@ levelNTT' m t = foldTT g h t m
                                else []  
 
 
---listPerLevelTT' :: ThreeT a -> [[a]]
---listPerLevelTT' = foldTT
+listPerLevelTT' :: ThreeT a -> [[a]]
+listPerLevelTT' = foldTT (\ x r1 r2 r3 -> [x] : specialZipWith (++) (specialZipWith (++) r1 r2) r3) (\ x -> [[x]])
 
 ---------------------------------------------------------------------------------------------------------------------------------------
 
