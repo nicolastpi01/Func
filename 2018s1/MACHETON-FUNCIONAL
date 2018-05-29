@@ -1,0 +1,1195 @@
+--                                                         MACHETÓN
+--                                                      FOLDS && RECRS
+
+ 
+foldr1' :: (a -> a -> a) -> [a] -> a
+foldr1' f [] = error "la lista esta vacia"
+foldr1' f [x] = x
+foldr1' f (x:xs) = f x (foldr1' f xs)
+ 
+recr' :: (a -> [a] -> b -> b) -> b -> [a] -> b
+recr' f z [] = z
+recr' f z (x:xs) = 
+            f x xs (recr' f z xs)
+
+
+sum', product' :: Num a => [a] -> a
+
+sum' = foldr (+) 0
+
+product' = foldr (*) 1
+
+elem', notElem' :: Eq a => a -> [a] -> Bool
+
+elem' y = foldr (\ x r -> x == y || r) False
+
+notElem' y = foldr (\ x r -> x /= y && r) True
+
+init' :: [a] -> [a]
+init' = recr' (\ x xs r -> if null xs then [] else x:r) (error "La lista esta vacia")
+
+subset :: Eq a => [a] -> [a] -> Bool
+subset xs ys = foldr (\ y r -> y `elem` ys && r) True xs
+
+maximum', minimum' :: Ord a => [a] -> a
+
+maximum' = foldr1 max 
+
+minimum' = foldr1 min
+
+
+lookup' :: Eq a => a -> [(a,b)] -> Maybe b
+lookup' x = foldr f Nothing
+        where f (x',y) r = if x == x' then Just y else r 
+
+
+find' :: (a -> Bool) -> [a] -> Maybe a
+find' p = foldr (\ x r -> if p x then Just x else r) Nothing
+
+
+takeWhile', dropWhile' :: (a -> Bool) -> [a] -> [a]
+
+takeWhile' p = foldr (\ x r -> if p x then x:r else []) []
+
+dropWhile' p = recr' (\ x xs r -> if p x then r else x:xs) []
+
+span' :: (a -> Bool) -> [a] -> ([a],[a])
+span' p = recr' (\ x xs r -> let (rs,ys) = r in if p x then (x:rs,ys) else ([],x:xs)) ([],[])
+
+break' :: (a -> Bool) -> [a] -> ([a], [a])
+break' p = recr' (\ x xs r -> let (rs,ys) = r in if not (p x) then (x:rs,ys) else ([],x:xs)) ([],[])
+
+unzip' :: [(a,b)] -> ([a],[b])
+unzip' = foldr (\ x r -> let (xs,ys) = r in ((fst x) : xs, (snd x) : ys)) ([],[])
+
+take' :: Int -> [a] -> [a]
+take' m xs = foldr g (const []) xs m
+             where g x r n = if n == 0
+                             then []
+                             else x : r (n-1)
+
+(!!¿) :: [a] -> Int -> a
+(!!¿) xs m = foldr g (\_ -> error "índice demasiado alto") xs m
+             where g x r n = if n == 0
+                             then x
+                             else r (n-1)
+
+zip' :: [a] -> [b] -> [(a,b)]
+zip' xs ys = foldr g (const []) xs ys
+   where
+   g x r [] = []
+   g x r (y:ys) = (x,y) : r ys
+
+zipWith' :: (a -> b -> c) -> [a] -> [b] -> [c]
+zipWith' f xs ys = foldr g (const []) xs ys
+   where
+   g x r [] = []
+   g x r (y:ys) = f x y : r ys
+
+splitAt' n xs = recr g (\_ -> ([], [])) xs n
+   where g x xs r 0 = ([], xs)
+         g x xs r n = 
+               let (ys, zs) = r (n-1)
+                   in (x:ys, zs)
+
+drop' n xs = recr g (\_ -> []) xs n
+   where g x xs r 0 = xs
+         g x xs r n = r (n-1)
+
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+--                                                    ÁRBOLES (foldTT)
+
+data Tree a = EmptyT | NodeT a (Tree a) (Tree a) deriving (Show)
+
+foldrT :: (a -> b -> b -> b) -> b -> Tree a -> b
+foldrT f y EmptyT = y
+foldrT f y (NodeT x t1 t2) = f x (foldrT f y t1) (foldrT f y t2)
+
+recrT :: (a -> Tree a -> Tree a -> b -> b -> b) -> b -> Tree a -> b
+recrT f y EmptyT = y
+recrT f y (NodeT x t1 t2) = f x t1 t2 (recrT f y t1) (recrT f y t2)
+
+sumT :: Tree Int -> Int 
+sumT = foldrT (\ x r1 r2 -> x + r1 + r2) 0
+
+sizeT :: Tree a -> Int
+sizeT = foldrT (\ x r1 r2 -> 1 + r1 + r2) 0
+
+--Necesario para listPerLevel
+specialZipWith :: (a -> a -> a) -> [a] -> [a] -> [a]
+specialZipWith f [] [] = []
+specialZipWith f xs [] = xs
+specialZipWith f [] ys = ys
+specialZipWith f (x:xs) (y:ys) = f x y : specialZipWith f xs ys 
+
+listPerLevel :: Tree a -> [[a]]
+listPerLevel = recrT (\ x t1 t2 r1 r2 -> if isEmptyT t1 && isEmptyT t2 then [[x]] else [x] : specialZipWith (++) r1 r2) []
+
+levelN :: Int -> Tree a -> [a]
+levelN m t = foldrT g (\_ -> []) t m
+             where g x r1 r2 n = if n == 0
+                                 then [x]
+                                 else r1 (n-1) ++ r2 (n-1)
+
+leftBranches :: Tree a -> [a]
+leftBranches = recrT (\ x t1 t2 r1 r2 -> if isEmptyT t1 then [] else root t1 : r1) [] where root (NodeT x t1 t2) = x
+
+
+longestBranch :: Tree a -> [a]
+longestBranch = foldrT (\ x r1 r2 -> let (xs,ys) = (r1,r2) in if length xs >= length ys then x:xs else x:ys) [] 
+
+allPaths :: Tree a -> [[a]]
+allPaths = recrT (\ x t1 t2 r1 r2 -> if isEmptyT t1 && isEmptyT t2 then [[x]] else map (x:) r1 ++ map (x:) r2) []
+
+
+------------------------------------------------------------------------------------------------------------------------------
+
+--                                          DEMOSTRACIONES (con fold)
+
+-- Demostrar las siguientes equivalencias y propiedades, comparando la implementación sin fold
+-- para todas las funciones) :
+
+
+-- 1) concat = foldr (++) []
+--                                = ppio extensionalidad
+-- concat xss = foldr (++) [] xss
+
+-- Demuestro por induccion estructural en xss para todo xss:
+
+-- Caso base, xss = []
+
+-- concat []
+--           = def concat
+-- []
+
+-- foldr (++) [] []
+--                 = def foldr
+-- []
+
+-- Caso inductivo, xss = (hs:hss)
+
+-- HI) concat hss = foldr (++) [] hss 
+-- TI) concat (hs:hss) = foldr (++) [] (hs:hss)
+
+-- foldr (++) [] (hs:hss)
+--                             = def foldr
+-- (++) hs (foldr (++) [] hss)
+--                             = HI
+-- (++) hs (concat hss)
+--                             = def (++)
+--hs ++ (concat hss)
+--                             = def concat (al revés)
+--concat (hs:hss)
+
+--                  QED
+
+
+-- 2) map f = foldr ((:) . f) []
+--                                   = ppio extensionalidad
+-- map f xs = foldr ((:) . f) [] xs
+
+-- Demuestro por inducción estructural en xs para todo xs:
+
+-- Caso base, xs = []
+
+-- map f []
+--           = def map
+-- []
+
+-- foldr ((:) . f) [] []
+--                        = def foldr
+-- []
+
+-- Caso inductivo, xs = (h:hs)
+
+-- HI) map f hs = foldr ((:) . f) [] hs
+-- TI) map f (h:hs) = foldr ((:) . f) [] (h:hs)
+
+-- foldr ((:) . f) [] (h:hs)
+--                                      = def foldr
+-- ((:) . f) h (foldr ((:) . f) [] hs)
+--                                      = HI
+-- ((:) . f) h (map f hs)
+--                                      = def (.)
+-- (:) (f h) (map f hs)
+--                                      = def (:)
+-- f h : map f hs
+--                                      = def map (al revés)
+-- map f (h:hs)
+
+--                  QED
+
+
+-- UN TIPO RARO (DEMOSTRACIONES SOBRE ESE TIPO)
+
+data T a = A a | B (T a) | C (T a) (T a) 
+
+mapT :: (a -> b) -> T a -> T b
+mapT f (A x) = A (f x)
+mapT f (B t) = B (mapT f t)
+mapT f (C t1 t2) = C (mapT f t1) (mapT f t2)
+
+
+-- Con la definición de map dada para el tipo T del ejercicio anterior (llamémosla mapX), demostrar:
+
+--1)
+
+ {- Todo dentro de este comentario largo son las demostraciones inductivas :s
+ 
+mapX id = id
+                    = ppio extensionalidad
+mapX id t = id t
+
+Demuestro por inducción estructural en t
+
+Caso base, t = (A x)
+
+mapX id (A x)
+                  = def mapX
+A (id x)
+                  = def id
+A x
+
+id (A x)
+                  = def id
+A x
+
+-- 2 Casos inductivos:
+
+Caso 1, t = (B r)    -> (r = recursive)
+
+HI) mapX id r = id r
+TI) mapX id (B r) = id (B r)
+
+mapX id (B r)
+                          = def mapX
+B (mapX id r)
+                          = HI
+B (id r)
+                          = def id
+B r
+                          = def id
+id (B r)
+
+Demostrado caso 1 .
+
+Caso 2, t = (C r1 r2) 
+
+HI) 
+1) mapX id r1 = id r1
+2) mapX id r2 = id r2
+TI) mapX id (C r1 r2) = id (C r1 r2)
+
+mapX id (C r1 r2)
+                              = def mapX
+C (mapX id r1) (mapX id r2)
+                              = HI 1) y 2)
+C (id r1) (id r2)
+                              = def id (2 veces)
+C r1 r2
+                              = def id
+id (C r1 r2)
+
+Demostrado caso 2 .
+
+                     QED
+
+-----------------------------------------------------------------------------------------
+
+2. mapX f . mapX g = mapX (f.g) (Llamada propiedad de fusión)
+
+mapX f . mapX g = mapX (f.g)
+                                      = ppio extensionalidad
+(mapX f . mapX g) t = mapX (f.g) t
+                                      = def (.)
+mapX f (mapX g t) = mapX (f.g) t
+
+Demuestro por inducción estructural en t
+
+Caso base, t = (A x)
+
+mapX f (mapX g (A x))
+                             = def mapX
+mapX f (A (g x))
+                             = def mapX
+A (f (g x))
+
+mapX (f.g) (A x)
+                     = def mapX
+A ((f.g) x)
+                     = def (.)
+A (f (g x))
+
+-- 2 Casos inductivos:
+
+Caso 1, t = (B r)    -> (r = recursive)
+
+
+HI) mapX f (mapX g r) = mapX (f.g) r
+TI) mapX f (mapX g (B r)) = mapX (f.g) (B r)
+
+
+mapX f (mapX g (B r))
+                         = def mapX
+mapX f (B (mapX g r))
+                         = def mapX
+B (mapX f (mapX g r))
+                         = HI
+B (mapX (f.g) r)
+                         = def mapX (al revés)
+mapX (f.g) (B r)
+
+Demostrado caso 1 .
+
+Caso 2, t = (C r1 r2) 
+
+HI) 
+1) mapX f (mapX g r1) = mapX (f.g) r1
+2) mapX f (mapX g r2) = mapX (f.g) r2
+TI) mapX f (mapX g (C r1 r2)) = mapX (f.g) (C r1 r2)
+
+
+mapX f (mapX g (C r1 r2))
+                                            = def mapX
+mapX f (C (mapX g r1) (mapX g r2))
+                                            = def mapX
+C (mapX f (mapX g r1)) (mapX f (mapX g r2))
+                                            = HI 1) y 2)
+C (mapX (f.g) r1) (mapX (f.g) r2)
+                                            = def mapX (al revés)
+mapX (f.g) (C r1 r2)
+
+                       QED
+
+-------------------------------------------------------------------------------------------
+
+
+--                                 EJERCICIOS SENCILLOS SOBRE ÁRBOLES
+
+
+data Tree a = EmptyT | NodeT a (Tree a) (Tree a) deriving (Show)
+
+sumT :: Tree Int -> Int
+sumT EmptyT = 0
+sumT (NodeT x t1 t2) = x + (sumT t1) + (sumT t2) 
+
+sizeT :: Tree a -> Int
+sizeT EmptyT = 0
+sizeT (NodeT x t1 t2) = 1 + (sizeT t1) + (sizeT t2)
+
+elemT :: Eq a => a -> Tree a -> Bool
+elemT x EmptyT = False
+elemT x (NodeT y t1 t2) = x == y || (elemT x t1) || (elemT x t2)
+
+occurrsT :: Eq a => a -> Tree a -> Int
+occurrsT y EmptyT = 0
+occurrsT y (NodeT x t1 t2) = if y == x then 1 + (occurrsT y t1) + (occurrsT y t2) else (occurrsT y t1) + (occurrsT y t2)
+
+
+leaves :: Tree a -> [a]
+leaves EmptyT = []
+leaves (NodeT x EmptyT EmptyT) = [x]
+leaves (NodeT x t1 t2) = (leaves t1) ++ (leaves t2)
+
+
+heightT :: Tree a -> Int
+heightT EmptyT = 0
+heightT (NodeT x EmptyT EmptyT) = 1 
+heightT (NodeT x t1 t2) = 1 + max (heightT t1) (heightT t2)
+
+
+mirrorT :: Tree a -> Tree a
+mirrorT EmptyT = EmptyT
+mirrorT (NodeT x t1 t2) = NodeT x (mirrorT t2) (mirrorT t1)
+
+concatT :: Num a => Tree [a] -> [a]
+concatT EmptyT = []
+concatT (NodeT x t1 t2) = (concatT t1) ++ x ++ (concatT t2) 
+
+levelN :: Int -> Tree a -> [a]
+levelN _ EmptyT = []
+levelN 0 (NodeT x t1 t2) = [x]
+levelN n (NodeT x t1 t2) = (levelN (n-1) t1) ++ (levelN (n-1) t2)  
+
+--Necesario para listPerLevel
+specialZipWith :: (a -> a -> a) -> [a] -> [a] -> [a]
+specialZipWith f [] [] = []
+specialZipWith f xs [] = xs
+specialZipWith f [] ys = ys
+specialZipWith f (x:xs) (y:ys) = f x y : specialZipWith f xs ys 
+
+listPerLevel :: Tree a -> [[a]]
+listPerLevel EmptyT = []
+listPerLevel (NodeT x EmptyT EmptyT) = [[x]]
+listPerLevel (NodeT x t1 t2) = [x] : specialZipWith (++) (listPerLevel t1) (listPerLevel t2)
+
+widthT :: Ord a => Tree a -> Int
+widthT = length . maximum . listPerLevel  
+
+
+longestBranch :: Tree a -> [a]
+longestBranch EmptyT = []
+longestBranch (NodeT x t1 t2) = let (xss,yss) = (longestBranch t1,longestBranch t2) 
+                                                     in if length xss >= length yss then x:xss else x:yss
+
+allPaths :: Tree a -> [[a]]
+allPaths EmptyT = []
+allPaths (NodeT x EmptyT EmptyT) = [[x]]
+allPaths (NodeT x t1 t2) = map (x:) (allPaths t1) ++ map (x:) (allPaths t2)
+
+
+
+--                                          CON UN TIPO DE DATO 
+
+data Mapa = Cofre Objeto | Bifurcacion Objeto Mapa Mapa deriving (Show)
+
+data Dir = Izq | Der deriving (Show)
+
+data Objeto = Tesoro | Chatarra deriving (Show)
+
+
+hayTesoro :: Mapa -> Bool
+hayTesoro (Cofre Tesoro) = True
+hayTesoro (Cofre Chatarra) = False
+hayTesoro (Bifurcacion Tesoro m1 m2) = True 
+hayTesoro (Bifurcacion Chatarra m1 m2) = (hayTesoro m1) || (hayTesoro m2) 
+
+
+hayTesoroEn :: [Dir] -> Mapa -> Bool
+hayTesoroEn [] (Cofre Tesoro) = True
+hayTesoroEn [] (Cofre Chatarra) = False
+hayTesoroEn _ (Cofre Tesoro) = True
+hayTesoroEn _ (Cofre Chatarra) = False
+hayTesoroEn [] (Bifurcacion Chatarra m1 m2) = False
+hayTesoroEn (Izq:xs) (Bifurcacion Chatarra m1 m2) = hayTesoroEn xs m1
+hayTesoroEn (Der:xs) (Bifurcacion Chatarra m1 m2) = hayTesoroEn xs m2
+hayTesoroEn _ (Bifurcacion Tesoro m1 m2) = True
+
+
+
+-- Precond: Hay un camino hacia el tesoro en el mapa y es único
+caminoAlTesoro :: Mapa -> [Dir]
+caminoAlTesoro (Cofre Tesoro) = []
+caminoAlTesoro (Cofre Chatarra) = []
+caminoAlTesoro (Bifurcacion Chatarra (Cofre Tesoro) _) = [Izq]
+caminoAlTesoro (Bifurcacion Chatarra _ (Cofre Tesoro)) = [Der] 
+caminoAlTesoro (Bifurcacion Tesoro _ _) = []
+caminoAlTesoro (Bifurcacion Chatarra m1 m2) = if length (caminoAlTesoro m1) >= 1 then Izq : (caminoAlTesoro m1) else Der : (caminoAlTesoro m2) 
+
+
+caminoRamaMasLarga :: Mapa -> [Dir]
+caminoRamaMasLarga (Cofre Tesoro) = []
+caminoRamaMasLarga (Cofre Chatarra) = []
+caminoRamaMasLarga (Bifurcacion Chatarra (Cofre Chatarra) (Cofre Tesoro)) = [Der]
+caminoRamaMasLarga (Bifurcacion Chatarra (Cofre Tesoro) (Cofre Chatarra)) = [Izq]
+caminoRamaMasLarga (Bifurcacion _ m1 m2) = if length (caminoRamaMasLarga m1) >= length (caminoRamaMasLarga m2) 
+                                                         then Izq : (caminoRamaMasLarga m1) else Der : (caminoRamaMasLarga m2) 
+
+
+
+
+tesorosPerLevel :: Mapa -> [[Objeto]]
+tesorosPerLevel (Cofre Chatarra) = []
+tesorosPerLevel (Cofre obj) = [[obj]]
+tesorosPerLevel (Bifurcacion Chatarra (Cofre Chatarra) (Cofre Chatarra)) = []
+tesorosPerLevel (Bifurcacion Chatarra (Cofre Chatarra) m2) = tesorosPerLevel m2
+tesorosPerLevel (Bifurcacion Chatarra m1 (Cofre Chatarra)) = tesorosPerLevel m1
+tesorosPerLevel (Bifurcacion Chatarra m1 m2) = specialZipWith (++) (tesorosPerLevel m1) (tesorosPerLevel m2)
+tesorosPerLevel (Bifurcacion obj m1 m2) = [obj] : specialZipWith (++) (tesorosPerLevel m1) (tesorosPerLevel m2)
+
+
+
+
+todosLosCaminos :: Mapa -> [[Dir]]
+todosLosCaminos (Cofre Tesoro) = []
+todosLosCaminos (Cofre Chatarra) = []
+todosLosCaminos (Bifurcacion _ (Cofre Tesoro) (Cofre Tesoro)) = [[Izq],[Der]]
+todosLosCaminos (Bifurcacion _ (Cofre Chatarra) (Cofre Chatarra)) = [[Izq],[Der]]
+todosLosCaminos (Bifurcacion _ (Cofre Chatarra) (Cofre Tesoro)) = [[Izq],[Der]]
+todosLosCaminos (Bifurcacion _ (Cofre Tesoro) (Cofre Chatarra)) = [[Izq],[Der]]
+todosLosCaminos (Bifurcacion _ m1 m2) = map (Izq:) (todosLosCaminos m1) ++ map (Der:) (todosLosCaminos m2)
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------
+
+--                                         MAS DEMOSTRACIONES (SOBRE LISTAS)
+
+
+--                                                    DEMOSTRACIONES INDUCTIVAS
+
+countFrom :: Int -> Int -> [Int]
+countFrom 0 = []
+countFrom n = n : countFrom (n-1)
+
+1) factorial x = product (countFrom x)
+
+-- Demostración por inducción en x
+
+Caso base x = 0
+
+factorial 0 = 1
+
+product (CountFrom 0) = product [] = 1
+
+Caso Inductivo x = h + 1
+
+HI) factorial h = product (countFrom h) 
+TI) factorial (h+1) = product (countFrom (h+1))
+
+factorial (h+1) 
+                               = (def factorial)
+(h+1) * factorial h 
+                               = (HI)
+(h+1) * product (countFrom h)
+                               = (def product)
+product ((h+1) * countFrom h)
+                               = (def countFrom)
+product (countFrom (h+1))
+
+--                 QED
+
+-----------------------------------------------------------------------------------
+
+2) length = sum . map (const 1)
+                                      = ppio de extensionalidad
+length xs = (sum . map (const 1)) xs
+                                      = (def (.))
+length xs = sum (map (const 1) xs)
+
+-- demuestro por inducción estructural en xs
+
+Caso base xs = []
+
+length [] 
+          = (def length)
+0
+
+sum (map (const 1) [])
+                        = (def map)
+sum []
+                        = (def sum)
+0
+
+Caso inductivo xs = (h:hs)
+
+HI) length hs = sum (map (const 1) hs)
+TI) length (h:hs) = sum (map (const 1) (h:hs))
+
+sum (map (const 1) (h:hs))
+                                    = (def map)
+sum (const 1 h : map (const 1) hs)
+                                    = (def const)
+sum (1 : map (const 1) hs)
+                                    = (def sum)
+1 + sum (map (const 1) hs)
+                                    = HI
+1 + length hs
+                                    = (def length)
+length (h:hs) 
+
+--                QED
+
+---------------------------------------------------------------------------
+
+6) length = length . reverse
+                                   = ppio extensionalidad
+length xs = (length . reverse) xs
+                                   = def (.)
+length xs = length (reverse xs)
+
+-- Demostración por inducción estructural en xs
+
+Caso base xs = []
+
+length []
+          = def length
+0
+
+length (reverse [])
+                    = def reverse
+length []
+                    = def length
+0
+
+Caso inductivo, xs = (h:hs)
+
+HI) length hs = length (reverse hs)
+TI) length (h:hs) = length (reverse (h:hs))
+
+length (reverse (h:hs))
+                                           = def reverse
+length (reverse hs ++ [h])
+                                           = lema 2)
+length (reverse hs) + length [h]
+                                           = def length
+length (reverse hs) + length (x:[])
+                                           = def length
+length (reverse hs) + 1 + length []
+                                           = def length
+length (reverse hs) + 1 + 0
+                                           = sumas
+length (reverse hs) + 1
+                                           = HI
+length hs + 1
+                                           = conmutatividad de la suma
+1 + length hs
+                                           = def length
+length (h:hs)
+
+--                           QED
+                                                             
+
+--1) lema : reverse (xs ++ ys) = reverse ys ++ reverse xs
+--2) lema : length (xs ++ ys) = length xs + length ys
+
+--reverse :: [a] -> [a]
+--reverse [] = []
+--reverse (x:xs) = reverse xs ++ [x]
+
+--length :: [a] -> Int
+--length [] = 0
+--length (x:xs) = 1 + length xs
+
+--(++) :: [a] -> [a] -> [a]
+--(++) [] ys = ys
+--(++) (x:xs) ys = x : (++) xs ys
+
+
+-------------------------------------------------------------------------------------------------------------
+
+
+7) length = length . map f
+                                 = ppio extensionalidad
+
+length xs = (length . map f) xs
+                                 = def (.)
+
+length xs = length (map f xs)
+
+-- Demuestro por inducción estructural sobre listas en xs
+
+Caso base, xs = []
+
+length []
+          = def length
+0
+
+length (map f [])
+                   = def map
+length []
+                   = def length
+0
+
+Caso inductivo, xs = (h:hs)
+
+HI) length hs = length (map f hs)
+TI) length (h:hs) = length (map f (h:hs))
+
+
+length (map f (h:hs))
+                         = def map
+length (f h : map f hs)
+                         = def length
+1 + length (map f hs)
+                         = HI
+1 + length hs
+                         = def length
+length (h:hs)
+
+
+--                          QED
+
+----------------------------------------------------------------------------------------------------------------
+
+--                                             DEMOSTRACIONES SOBRE ARBOLES
+
+
+9) mirrorT . mirrorT = id
+                             = ppio extensionalidad
+(mirrorT - mirrorT) t = id t
+                             = def (.)
+mirrorT (mirrorT t) = id t
+
+-- Demuestro por inducción estructural en t
+
+Caso base, t = EmptyT
+
+mirrorT (mirrorT t) = id t
+
+id EmptyT
+          = def id
+EmptyT
+
+mirrorT (mirrorT EmptyT)
+                         = def mirrorT
+mirrorT EmptyT
+                         = def mirrorT
+EmptyT
+
+Caso inductivo, t = (NodeT x t1 t2)
+
+HI) 1) mirrorT (mirrorT t1) = id t1
+HI) 2) mirrorT (mirrorT t2) = id t2
+TI) mirrorT (mirrorT (NodeT x t1 t2)) = id (NodeT x t1 t2)
+
+mirrorT (mirrorT (NodeT x t1 t2))                = id (NodeT x t1 t2)
+                                                       
+mirrorT (mirrorT (NodeT x t1 t2))
+                                                 = def mirrorT
+mirrorT (NodeT x (mirrorT t2) (mirrorT t1))
+                                                 = def mirrorT
+NodeT x mirrorT(mirrorT t1) mirrorT(mirrorT t2)
+                                                 = HI 1) y 2)
+NodeT x (id t1) (id t2)
+                                                 = def id
+NodeT x t1 t2
+                                                 = def id
+id (NodeT x t1 t2) 
+
+
+--                         QED
+
+---------------------------------------------------------------------------------------------------  
+
+
+10) sumT . mapT (const 1) = sizeT
+                                     = ppio extensionalidad
+(sumT . mapT (const 1)) t = sizeT t
+                                     = def (.)
+sumT(mapT (const 1) t) = sizeT t
+
+-- Demuestro por inducción estructural en t
+
+Caso base, t = EmptyT
+
+sumT(mapT (const 1) EmptyT)
+                            = def mapT
+sumT EmptyT
+                            = def sumT
+0
+
+sizeT EmptyT
+              = def sizeT
+0
+
+Caso inductivo, t = (NodeT x t1 t2)
+
+HI)
+1) sumT(mapT (const 1) t1) = sizeT t1
+2) sumT(mapT (const 1) t2) = sizeT t2
+
+TI) sumT(mapT (const 1) (NodeT x t1 t2)) = sizeT (NodeT x t1 t2) 
+
+sumT(mapT (const 1) (NodeT x t1 t2))
+                                                                  = def mapT
+sumT (NodeT (const 1 x) (mapT (const 1 t1)) (mapT (const 1 t2)))
+                                                                  = def sumT
+(const 1 x) + sumT (mapT (const 1 t1)) + sumT (mapT (const 1 t2))
+                                                                  = HI
+(const 1 x) + (sizeT t1) + (sizeT t2)
+                                                                  = def const
+1 + (size t1) + (size t2)
+                                                                  = def sizeT
+sizeT (NodeT x t1 t2)
+
+--                           QED
+
+
+-------------------------------------------------------------------------------------------------------------------------
+
+11) sizeT = sizeT . mirrorT
+                               = ppio extensionalidad
+sizeT t = (sizeT . mirrorT) t
+                               = def (.)
+sizeT t = sizeT (mirrorT t)
+
+-- Demuestro por inducción estructural en t
+
+Caso base, t = EmptyT
+
+sizeT EmptyT
+             = def sizeT
+0
+
+sizeT (mirrorT EmptyT)
+                        = def mirrorT
+sizeT EmptyT
+                        = def sizeT
+0
+
+
+Caso inductivo, t = (NodeT x t1 t2)
+
+HI)
+1) sizeT t1 = sizeT (mirrorT t1)
+2) sizeT t2 = sizeT (mirrorT t2)
+TI) sizeT (NodeT x t1 t2) = sizeT (mirrorT (NodeT x t1 t2)) 
+
+sizeT (mirrorT (NodeT x t1 t2))
+                                               = def mirrorT
+sizeT (NodeT x (mirrorT t2) (mirrorT t1))
+                                               = def sizeT
+1 + (sizeT (mirrorT t2)) + (sizeT (mirrorT t1))
+                                               = HI 1) 2)
+1 + (sizeT t2) + (sizeT t1)
+                                               = conmutatividad suma
+1 + (sizeT t1) + (sizeT t2)
+                                               = def sizeT
+sizeT (NodeT x t1 t2)
+
+--                       QED
+
+-------------------------------------------------------------------------------------------------------------------------------
+
+--                               RECURSION EXPLICITA (SOBRE LISTAS)
+
+maximum', minimum' :: Ord a => [a] -> a
+
+maximum' [] = error "No hay max. de lista vacia"
+maximum' [x] = x
+maximum' (x:xs) = max x (maximum xs)
+
+
+minimum' [] = error "No hay min. de lista vacia"
+minimum' [x] = x
+minimum' (x:xs) = min x (minimum' xs)
+
+
+lookup' :: Eq a => a -> [(a,b)] -> Maybe b
+lookup' _ [] = Nothing
+lookup' a (x:xs) = if a == (fst x) then Just (snd x) else lookup' a xs   
+
+
+
+unzip' :: [(a,b)] -> ([a],[b])
+unzip' [] = ([],[])
+unzip' (x:xs) = let (zs,ys) = unzip' xs
+                in (fst x: fst (unzip' xs),snd x: snd (unzip' xs))
+
+
+tails :: [a] -> [[a]]
+tails [] = []
+tails (x:xs) = xs : tails xs
+
+
+replicate' :: Int -> a -> [a]
+replicate' 0 a = []
+replicate' n a = a : replicate' (n-1) a
+
+repeat' :: a -> [a]
+repeat' a = a : repeat' a
+
+cycle' :: [a] -> [a]
+cycle' [] = []
+cycle' xs = xs ++ cycle' xs
+
+nats :: [Int]
+nats = [1..]
+
+agrupar :: Eq a => [a] -> [[a]]
+agrupar [] = []
+agrupar [x] = [[x]]
+agrupar (x:xs) = let (ys:yss) = agrupar xs
+                               in if elem' x ys then (x:ys):yss else [x] : agrupar xs
+
+countBy :: (a -> Bool) -> [a] -> Int
+countBy p  [] = 0
+countBy p (x:xs) = 
+  if p x then 1 + countBy p xs else countBy p xs
+
+
+findIndex :: (a -> Bool) -> [a] -> Maybe Int    
+findIndex _ [] = Nothing
+findIndex f (x:xs) = let maybe = findIndex f xs
+                     in if f x then Just 0
+                        else if isJust maybe then Just(fromJust(maybe) + 1)
+                             else maybe
+
+partition :: (a -> Bool) -> [a] -> ([a], [a])
+partition f [] = ([],[])
+partition f (x:xs) = let (left,right) = partition f xs
+                               in if f x then ((x:left),right) else (left,(x:right))
+
+-----------------------------------------------------------------------------------------------------------
+
+--                                          FOLDRS'' RAROS
+
+foldrT :: (a -> b -> b -> b) -> b -> Tree a -> b
+foldrT f y EmptyT = y
+foldrT f y (NodeT x t1 t2) = f x (foldrT f y t1) (foldrT f y t2)
+
+foldrNEL f g (Unit x) = g x
+foldrNEL f g (NECons x nel) = x `f` (foldrNEL f g nel)
+
+foldrMT f g (Lm m) = g m
+foldrMT f g (Bm x mt1 mt2) = f x (foldrMT f g mt1) (foldrMT f g mt2)
+
+foldrLT f g (L xs) = g xs
+foldrLT f g (BL x lt1 lt2) = f x (foldrLT f g lt1) (foldrLT f g lt2)
+
+foldrTT f g (A x) = g x
+foldrTT f g (B t) = foldrTT f g t
+foldrTT f g (C t1 t2) = (foldrTT f g t1) `f` (foldrTT f g t2)
+
+foldrAPPL f g b Nil = b
+foldrAPPL f g b (Unity x) = g x
+foldrAPPL f g b (Append ap1 ap2) = (foldrAPPL f g b ap1) `f` (foldrAPPL f g b ap2)
+
+data Tree a = EmptyT | NodeT a (Tree a) (Tree a)
+data NonEmptyList a = Unit a | NECons a (NonEmptyList a)
+data AppendList a = Nil | Unity a | Append (AppendList a) (AppendList a)
+data T a = A a | B (T a) | C (T a) (T a)
+data LTree a = L [a] | BL a (LTree a) (LTree a)
+MTree a = Lm (Maybe a) | Bm a (MTree a) (MTree a)
+
+-- ALGUNOS EJERCICIOS SOBRE ESTOS TIPOS DE DATOS CON SUS FOLDS
+
+
+-- data NonEmptyList a = Unit a | NECons a (NonEmptyList a) 
+
+partitionNEL :: (a -> Bool) -> NonEmptyList a -> ([a],[a])
+partitionNEL f = foldrNEL (\ x nel -> let (left, right) = nel 
+                             in if f x then ((x:left), right) else (left, (x:right)) ) (\ z -> if f z then ([z],[]) else ([],[z]) )
+
+
+
+-- data AppendList a = Nil | Unity a | Append (AppendList a) (AppendList a)
+partitionAPPL :: (a -> Bool) -> AppendList a -> ([a],[a]) 
+partitionAPPL f = foldrAPPL (\ x y -> let ((l1,r1), (l2,r2)) = (x,y) 
+                                       in ((l1 ++ l2), (r1 ++ r2)) ) (\ z -> if f z then ([z],[]) else ([],[z]) )  ([],[])
+
+
+
+-- data Maybe a = Nothing | Just a
+partitionMaybe :: (a -> Bool) -> Maybe a -> ([a],[a]) 
+partitionMaybe f = foldrMaybe (\ x -> if f x then ([x],[]) else ([],[x]) )  ([],[]) 
+
+
+-- data T a = A a | B (T a) | C (T a) (T a)
+partitionTT :: (a -> Bool) -> T a -> ([a],[a]) 
+partitionTT f = foldrTT (\ x y -> let ((l1,r1), (l2,r2)) = (x,y) 
+                                       in ((l1 ++ l2), (r1 ++ r2)) )
+                                       (\ z -> if f z then ([z],[]) else ([],[z]) )
+
+
+-- data LTree a = L [a] | BL a (LTree a) (LTree a)
+
+partitionLT :: (a -> Bool) -> LTree a -> ([a],[a])
+partitionLT f = foldrLT (\ x lt1 lt2 -> let ((l1,r1),(l2,r2)) = (lt1,lt2) 
+                                    in if f x then ((x: l1 ++ l2), r1 ++ r2) else ((l1 ++ l2),(x: r1 ++ r2))  ) (\ xs -> partition f xs) 
+
+
+-- data Either b a = Left b | Right a 
+
+partitionEither :: (a -> Bool) -> Either b a -> ([a],[a])
+partitionEither f (Left x) = error ""
+partitionEither f (Right x) = if f x then ([x],[]) else ([],[x]) 
+
+
+-- data MTree a = Lm (Maybe a) | Bm a (MTree a) (MTree a)
+
+partitionMT :: (a -> Bool) -> MTree a -> ([a],[a]) 
+partitionMT f = foldrMT (\ x mt1 mt2 -> let ((l1,r1),(l2,r2)) = (mt1,mt2) 
+                                    in if f x then ((x: l1 ++ l2), r1 ++ r2) else ((l1 ++ l2),(x: r1 ++ r2))  )
+                                                                                                          (\ m -> partitionMaybe f m)
+
+------------------------------------------------------------------------------------------------------------------------------
+
+--                                              REDUCCIONES
+
+1.2.a
+-------------------------------------------------------
+-------------------------------------------------------
+map :: (a -> b) -> [a] -> [b]
+map f [] = []
+map f (x:xs) = f x : map f xs
+
+(++) :: [a] -> [a] -> [a]
+(++) [] ys = ys
+(++) (x:xs) ys = x : (xs ++ ys)
+-------------------------------------------------------
+
+map (+1) [1,2,3] == [2] ++ [3] ++ [4]
+
+map (+1) [1,2,3] 
+
+-> (def map)
+1 + 1 (map (+1) [2,3]) 
+
+-> (def map)
+1 + 1 : 2 + 1 : map (+1) [3] 
+
+-> (def map)
+1 + 1 : 2 + 1 : 3 + 1 : map (+1) [] 
+
+-> (def map)
+1 + 1 : 2 + 1 : 3 + 1 : [] 
+
+-> (aritmética)
+[2,3,4]
+
+[2] ++ [3] ++ [4] = [2] ++ ([3] ++ [4]) 
+
+-> (def ++)
+2 : ([] ++ ([3] ++ [4]))
+
+-> (def ++)
+2 : ([3] ++ [4]) 
+
+-> (def ++)
+2 : (3 : [] ++ [4]) 
+
+-> (def ++)
+2 : (3 : [4]) 
+
+= [2,3,4]
+
+[2,3,4] == [2,3,4] 
+-> (por igualdad)
+True
+(estoy ejecutando muchos pasos, debería hacerlos, pero no importa)
+
+-------------------------------------------------------
+1.2.d
+-------------------------------------------------------
+-------------------------------------------------------
+
+factorial 3 == product [1,2,3]
+
+factorial 3 
+-> (def factorial)
+3 * factorial 2 
+-> (def factorial)
+3 * 2 * factorial 1 
+-> (def factorial)
+3 * 2 * 1 * factorial 0 
+-> (def factorial)
+3 * 2 * 1 * 1 
+-> (def factorial)
+6
+
+product [1,2,3] 
+
+-> (def product)
+1 * product [2,3]
+
+-> (def product)
+1 * 2 * product [3] 
+
+-> (def product)
+1 * 2 * 3 * product [] 
+
+-> (def product)
+1 * 2 * 3 * 1 
+
+-> (aritmética)
+6
+
+-------------------------------------------------------
+1.2.e
+-------------------------------------------------------
+-------------------------------------------------------
+(!!) :: [a] -> Int -> a
+(!!) (x:xs) 0 = x
+(!!) (x:xs) n = (!!) (n-1) xs
+
+iterate :: (a -> a) -> a -> [a]
+iterate f x = x : iterate f (f x)
+
+replicate :: Int -> a -> [a]
+replicate n = take n . repeat
+
+take :: Int -> [a] -> [a]
+take 0 xs = []
+take n [] = []
+take n (x:xs) = x : take (n-1) xs
+
+repeat :: a -> [a]
+repeat = iterate id
+-------------------------------------------------------
+
+(iterate (1:) []) !! 3 == replicate 3 1
+
+(iterate (1:) []) !! 3 
+
+-> (def iterate (por pattern matching de (!!), sólo para que se entienda))
+([] : iterate (1:) [1]) !! 3 
+
+-> (def !!)
+(iterate (1:) [1]) !! 2 
+
+-> (def iterate)
+([1] : iterate (1:) [1,1]) !! 2 
+
+-> (def !!)
+(iterate (1:) [1,1]) !! 1 
+
+-> (def iterate)
+([1,1] : iterate (1:) [1,1,1]) !! 1 
+
+-> (def !!)
+(iterate (1:) [1,1,1]) !! 0 
+
+-> (def iterate)
+([1,1,1] : iterate (1:) [1,1,1,1]) !! 0 
+
+-> (def !!)
+[1,1,1]
+
+
+replicate 3 1 
+
+-> (def replicate)
+(take 3 . repeat) 1
+
+(esto es importante, no es (take 3 . repeat 1))
+
+(take 3 . repeat) 1 
+
+-> (def .)
+take 3 (repeat 1) 
+
+-> (def repeat)
+take 3 (iterate id 1) 
+
+-> (def iterate)
+take 3 (id 1 : iterate id (id 1)) 
+
+-> (def take)
+id 1 : take 2 (iterate id (id 1)) 
+
+-> (def iterate)
+id 1 : take 2 (id (id 1) : iterate id (id (id 1))) 
+
+-> (def take)
+id 1 : id (id 1) : take 1 (iterate id (id (id 1))) 
+
+-> (def iterate)
+id 1 : id (id 1) : take 1 (id (id (id 1)) : iterate id (id (id (id 1)))) 
+
+-> (def take)
+id 1 : id (id 1) : id (id (id 1)) : take 0 (iterate id (id (id (id 1)))) 
+
+-> (def take)
+id 1 : id (id 1) : id (id (id 1)) : [] 
+
+-> (def id)
+1 : id (id 1) : id (id (id 1)) : [] 
+
+-> (def id dos veces)
+1 : 1 : id (id (id 1)) : [] 
+
+-> (def id tres veces)
+1 : 1 : 1 : []
+
+= [1,1,1]
+
+-------------------------------------------------------
+
+
+
+
+

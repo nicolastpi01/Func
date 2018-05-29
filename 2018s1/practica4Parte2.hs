@@ -179,11 +179,17 @@ nubBy p = recr' (\ x xs r -> if null xs then [x] else if p x (head xs) then r el
 concatMap' :: (a -> [b]) -> [a] -> [b]
 concatMap' p = foldr (\ x r -> p x ++ r) []
 
+splitAt' n xs = recr g (\_ -> ([], [])) xs n
+   where g x xs r 0 = ([], xs)
+         g x xs r n = 
+               let (ys, zs) = r (n-1)
+                   in (x:ys, zs)
 
+drop' n xs = recr g (\_ -> []) xs n
+   where g x xs r 0 = xs
+         g x xs r n = r (n-1)
 
 -- (Pendientes)     
--- DROPN (esta en el mail)
--- SPLIT AT (esta en el mail)
 -- GROUPBY (AGRUPAR)
 -- NUBBY (sacar rep en base a un p)
 
@@ -277,7 +283,9 @@ levelN :: Int -> Tree a -> [a]
 levelN m t = foldrT g (\_ -> []) t m
              where g x r1 r2 n = if n == 0
                                  then [x]
-                                 else r1 (n-1) ++ r2 (n-1) 
+                                 else r1 (n-1) ++ r2 (n-1)
+
+ 
 
 
 
@@ -294,7 +302,7 @@ levelN m t = foldrT g (\_ -> []) t m
 --                                = ppio extensionalidad
 -- concat xss = foldr (++) [] xss
 
--- Demuestro por induccion estructural en xss:
+-- Demuestro por induccion estructural en xss para todo xss:
 
 -- Caso base, xss = []
 
@@ -328,7 +336,7 @@ levelN m t = foldrT g (\_ -> []) t m
 --                                   = ppio extensionalidad
 -- map f xs = foldr ((:) . f) [] xs
 
--- Demuestro por inducción estructural en xs
+-- Demuestro por inducción estructural en xs para todo xs:
 
 -- Caso base, xs = []
 
