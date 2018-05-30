@@ -76,24 +76,38 @@ recM f z g (Bifurcacion xs m1 m2) = g xs m1 m2 (recM f z g m1) (recM f z g m2)
 
 -- 3) Definir las funciones del primer punto usando foldM y recM, según corresponda.
 
+objects' :: Mapa a -> [a]
+objects' = foldM id id (\ xs r1 r2 -> xs ++ r1 ++ r2)
+
+mapM'' :: (a -> b) -> Mapa a -> Mapa b
+mapM'' f = foldM (\ xs -> Cofre (map f xs)) (\ r -> Nada r) (\ xs r1 r2 -> Bifurcacion (map f xs) r1 r2)
+
+
+--hasObjectAt' f m ds = foldM g h j m f ds
+--                      where g xs [] = any f xs
+--                            g xs ds = error "el camino no existe en el mapa"
+--                            h r [] = False
+--                            h r (Straight:ds) = r ds
+--                            h r ds = error "el camino no existe en el mapa"
+--                            j xs r1 r2 [] = False
+--                            j xs r1 r2 (Left',ds) = r1 ds
+--                            j xs r1 r2 (Right',ds) = r2 ds
+--                            j xs r1 r2 (Straight,ds) = any f xs
+--                            j xs r1 r2 ds = error "el camino no existe en el mapa"
 
 
 
+longestPath' :: Mapa a -> [Dir]
+longestPath' = foldM (const []) (\r -> Straight : r) g
+                                             where g xs r1 r2 = let (xs,ys) = (r1,r2)
+                                                                in if length xs >= length ys then Left' : r1 
+                                                                                             else Right' : r2
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+objectsOfLongestPath' :: Mapa a -> [a]
+objectsOfLongestPath' = foldM id id g
+                              where g xs r1 r2 = let (xs,ys) = (r1,r2)
+                                                 in if length xs >= length ys then r1  
+                                                                              else r2
 
 
 
