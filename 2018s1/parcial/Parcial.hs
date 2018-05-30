@@ -111,6 +111,52 @@ objectsOfLongestPath' = foldM id id g
                                                                               else r2
 
 
+-------------------------------------------------------------------------------------------------------------------------------
+
+--                                                      DEMOSTRACIONES
+-- 4) demostrar las siguientes equivalencias usando las funciones definidas en el punto 1
+
+-- a) length . objects = countObjects
+                                                 = ppio ext
+(length . objects) t = countObjects t
+                                                 = def (.)
+length (objects t) = countObjects t
+
+Demuestro por induccion estructural en t para todo t
+
+Caso base, t = (Cofre xs)
+
+length (objects (Cofre xs))
+                             = def objects
+length xs
+
+countObjects (Cofre xs)
+                         = def countObjects
+length xs
+
+
+data Mapa a = Cofre [a] | Nada (Mapa a) | Bifurcacion [a] (Mapa a) (Mapa a) deriving (Show)
+Caso inductivo, t =   
+
+
+
+
+
+
+
+
+objects :: Mapa a -> [a]
+objects (Cofre xs) = xs
+objects (Nada m) = objects m
+objects (Bifurcacion xs m1 m2) = xs ++ (objects m1) ++ (objects m2)
+
+countObjects (Cofre xs) = length xs
+countObjects (Nada m) = countObjects m
+countObjects (Bifurcacion xs m1 m2) = length xs + countObjects m1 + countObjects m2
+
+
+
+ 
 
 
 
