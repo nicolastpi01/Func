@@ -1,6 +1,6 @@
 
 
---                                              PARCIAL
+--                                                            PARCIAL
 
 
 -- MAPA
@@ -54,11 +54,11 @@ objectsOfLongestPath (Bifurcacion xs m1 m2) = let (xs,ys) = (longestPath m1,long
 
 --allPaths :: Mapa a -> [[Dir]]
 --allPaths (Cofre xs) = []
---allPaths (Nada m) = map (Straight:) (allPaths m)
---allPaths (Bifurcacion xs m1 m2) = map (Straight:) (allPaths m1) ++ 
---                                  map (Straight:) (allPaths m2)
+--allPaths (Nada m) = myMap Straight (allPaths m)
+--allPaths (Bifurcacion xs m1 m2) = (myMap (Right':) (allPaths m1)) ++ (myMap (Left':) (allPaths m2))
 
-
+-- allPaths = foldM
+                            
 
 -- 2) Dar tipo y definir foldM y recMm una versión de fold y recursión primitiva, respectivamente para la estrcutura de Mapa.
 
@@ -83,17 +83,18 @@ mapM'' :: (a -> b) -> Mapa a -> Mapa b
 mapM'' f = foldM (\ xs -> Cofre (map f xs)) (\ r -> Nada r) (\ xs r1 r2 -> Bifurcacion (map f xs) r1 r2)
 
 
---hasObjectAt' f m ds = foldM g h j m f ds
---                      where g xs [] = any f xs
---                            g xs ds = error "el camino no existe en el mapa"
---                            h r [] = False
---                            h r (Straight:ds) = r ds
---                            h r ds = error "el camino no existe en el mapa"
---                            j xs r1 r2 [] = False
---                            j xs r1 r2 (Left',ds) = r1 ds
---                            j xs r1 r2 (Right',ds) = r2 ds
---                            j xs r1 r2 (Straight,ds) = any f xs
---                            j xs r1 r2 ds = error "el camino no existe en el mapa"
+hasObjectAt' :: (a -> Bool) -> Mapa a -> [Dir] -> Bool
+hasObjectAt' f m ds = foldM g h j m ds
+                      where g xs [] = any f xs
+                            g xs ys = error "el camino no existe en el mapa"
+                            h r [] = False
+                            h r (Straight:xs) = r xs
+                            h r ds = error "el camino no existe en el mapa"
+                            j xs r1 r2 [] = False
+                            j xs r1 r2 (Straight:ys) = any f xs
+                            j xs r1 r2 (Left':ys) = r1 ys
+                            j xs r1 r2 (Right':ys) = r2 ys
+                            j xs r1 r2 _ = error "el camino no existe en el mapa"
 
 
 
