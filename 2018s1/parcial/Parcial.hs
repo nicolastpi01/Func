@@ -39,15 +39,15 @@ hasObjectAt _ _ _ = error "el camino no existe en el mapa"
 longestPath :: Mapa a -> [Dir]
 longestPath (Cofre xs) = []
 longestPath (Nada m) = Straight : (longestPath m)
-longestPath (Bifurcacion xs m1 m2) = let (xs,ys) = (longestPath m1,longestPath m2)
-                                     in if length xs >= length ys then Left' : (longestPath m1) 
+longestPath (Bifurcacion xs m1 m2) = let (zs,ys) = (longestPath m1,longestPath m2)
+                                     in if length zs >= length ys then Left' : (longestPath m1) 
                                                                   else Right' : (longestPath m2)
 
 objectsOfLongestPath :: Mapa a -> [a]
 objectsOfLongestPath (Cofre xs) = xs
 objectsOfLongestPath (Nada m) = objectsOfLongestPath m 
-objectsOfLongestPath (Bifurcacion xs m1 m2) = let (ds,is) = (longestPath m1,longestPath m2)
-                                              in if length ds >= length is then xs ++ (objectsOfLongestPath m1)  
+objectsOfLongestPath (Bifurcacion xs m1 m2) = let (zs,ys) = (longestPath m1,longestPath m2)
+                                              in if length zs >= length ys then xs ++ (objectsOfLongestPath m1)  
                                                                            else xs ++ (objectsOfLongestPath m2)
 
 
@@ -63,9 +63,9 @@ allPaths (Bifurcacion xs m1 m2) = (map (Left':) (allPaths m1)) ++
 -- 2) Dar tipo y definir foldM y recMm una versión de fold y recursión primitiva, respectivamente para la estrcutura de Mapa.
 
 foldM :: ([a] -> b) -> (b -> b) -> ([a] -> b -> b -> b) -> Mapa a -> b
-foldM f z q (Cofre xs) = f xs
-foldM f z q (Nada m) = z (foldM f z q m)
-foldM f z q (Bifurcacion xs m1 m2) = q xs (foldM f z q m1) (foldM f z q m2)
+foldM f z g (Cofre xs) = f xs
+foldM f z g (Nada m) = z (foldM f z g m)
+foldM f z g (Bifurcacion xs m1 m2) = g xs (foldM f z g m1) (foldM f z g m2)
  
 
 recM :: ([a] -> b) -> (b -> Mapa a -> b) -> ([a] -> Mapa a -> Mapa a -> b  -> b -> b) -> Mapa a -> b
@@ -89,7 +89,7 @@ hasObjectAt' f m ds = foldM g h j m ds
                             g xs ys = error "el camino no existe en el mapa"
                             h r [] = False
                             h r (Straight:xs) = r xs
-                            h r ds = error "el camino no existe en el mapa"
+                            h r ys = error "el camino no existe en el mapa"
                             j xs r1 r2 [] = False
                             j xs r1 r2 (Straight:ys) = any f xs
                             j xs r1 r2 (Left':ys) = r1 ys
@@ -100,14 +100,14 @@ hasObjectAt' f m ds = foldM g h j m ds
 
 longestPath' :: Mapa a -> [Dir]
 longestPath' = foldM (const []) (\r -> Straight : r) g
-                                             where g xs r1 r2 = let (xs,ys) = (r1,r2)
-                                                                in if length xs >= length ys then Left' : r1 
+                                             where g xs r1 r2 = let (zs,ys) = (r1,r2)
+                                                                in if length zs >= length ys then Left' : r1 
                                                                                              else Right' : r2
 
 objectsOfLongestPath' :: Mapa a -> [a]
 objectsOfLongestPath' = foldM id id g
-                              where g xs r1 r2 = let (rs,ys) = (r1,r2)
-                                                 in if length rs >= length ys then xs ++ r1  
+                              where g xs r1 r2 = let (zs,ys) = (r1,r2)
+                                                 in if length zs >= length ys then xs ++ r1  
                                                                               else xs ++ r2
 
 
