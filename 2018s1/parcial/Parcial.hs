@@ -46,9 +46,9 @@ longestPath (Bifurcacion xs m1 m2) = let (xs,ys) = (longestPath m1,longestPath m
 objectsOfLongestPath :: Mapa a -> [a]
 objectsOfLongestPath (Cofre xs) = xs
 objectsOfLongestPath (Nada m) = objectsOfLongestPath m 
-objectsOfLongestPath (Bifurcacion xs m1 m2) = let (xs,ys) = (longestPath m1,longestPath m2)
-                                              in if length xs >= length ys then objectsOfLongestPath m1  
-                                                                           else objectsOfLongestPath m2
+objectsOfLongestPath (Bifurcacion xs m1 m2) = let (ds,is) = (longestPath m1,longestPath m2)
+                                              in if length ds >= length is then xs ++ (objectsOfLongestPath m1)  
+                                                                           else xs ++ (objectsOfLongestPath m2)
 
 
 
@@ -106,9 +106,9 @@ longestPath' = foldM (const []) (\r -> Straight : r) g
 
 objectsOfLongestPath' :: Mapa a -> [a]
 objectsOfLongestPath' = foldM id id g
-                              where g xs r1 r2 = let (xs,ys) = (r1,r2)
-                                                 in if length xs >= length ys then r1  
-                                                                              else r2
+                              where g xs r1 r2 = let (rs,ys) = (r1,r2)
+                                                 in if length rs >= length ys then xs ++ r1  
+                                                                              else xs ++ r2
 
 
 allPaths' :: Mapa a -> [[Dir]]
