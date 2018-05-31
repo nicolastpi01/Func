@@ -52,12 +52,12 @@ objectsOfLongestPath (Bifurcacion xs m1 m2) = let (xs,ys) = (longestPath m1,long
 
 
 
---allPaths :: Mapa a -> [[Dir]]
---allPaths (Cofre xs) = []
---allPaths (Nada m) = myMap Straight (allPaths m)
---allPaths (Bifurcacion xs m1 m2) = (myMap (Right':) (allPaths m1)) ++ (myMap (Left':) (allPaths m2))
+allPaths :: Mapa a -> [[Dir]]
+allPaths (Cofre xs) = [[]]
+allPaths (Nada m) = map (Straight:) (allPaths m)
+allPaths (Bifurcacion xs m1 m2) = (map (Left':) (allPaths m1)) ++ 
+                                  (map (Right':) (allPaths m2))
 
--- allPaths = foldM
                             
 
 -- 2) Dar tipo y definir foldM y recMm una versión de fold y recursión primitiva, respectivamente para la estrcutura de Mapa.
@@ -111,49 +111,54 @@ objectsOfLongestPath' = foldM id id g
                                                                               else r2
 
 
--------------------------------------------------------------------------------------------------------------------------------
+allPaths' :: Mapa a -> [[Dir]]
+allPaths' = foldM (\ xs -> [[]]) (\r -> map (Straight:) r) (\ xs r1 r2 -> (map (Left':) r1) ++ (map (Right':) r2))
 
---                                                      DEMOSTRACIONES
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
+
+--                                                DEMOSTRACIONES
+
 -- 4) demostrar las siguientes equivalencias usando las funciones definidas en el punto 1
 
 -- a) length . objects = countObjects
-                                                 = ppio ext
-(length . objects) t = countObjects t
-                                                 = def (.)
-length (objects t) = countObjects t
+--                                                 = ppio ext
+--(length . objects) t = countObjects t
+--                                                 = def (.)
+--length (objects t) = countObjects t
 
-Demuestro por induccion estructural en t para todo t
+--Demuestro por induccion estructural en t para todo t
 
-Caso base, t = (Cofre xs)
+--Caso base, t = (Cofre xs)
 
-length (objects (Cofre xs))
-                             = def objects
-length xs
+--length (objects (Cofre xs))
+--                             = def objects
+--length xs
 
-countObjects (Cofre xs)
-                         = def countObjects
-length xs
-
-
-data Mapa a = Cofre [a] | Nada (Mapa a) | Bifurcacion [a] (Mapa a) (Mapa a) deriving (Show)
-Caso inductivo, t =   
+--countObjects (Cofre xs)
+--                         = def countObjects
+--length xs
 
 
+--data Mapa a = Cofre [a] | Nada (Mapa a) | Bifurcacion [a] (Mapa a) (Mapa a) deriving (Show)
+--Caso inductivo, t =   
 
 
+--objects :: Mapa a -> [a]
+--objects (Cofre xs) = xs
+--objects (Nada m) = objects m
+--objects (Bifurcacion xs m1 m2) = xs ++ (objects m1) ++ (objects m2)
 
 
+-- b) elem x . objects = hasObjectAt (==x)
+-- Suponer ya demostrada la sig. propiedad = Para todo x, as, bs : elem x (as ++ bs) = elem x as || elem x bs
 
+-- c) length . map f . map g . objects = countObjects . mapM (f . g)
 
-objects :: Mapa a -> [a]
-objects (Cofre xs) = xs
-objects (Nada m) = objects m
-objects (Bifurcacion xs m1 m2) = xs ++ (objects m1) ++ (objects m2)
-
-countObjects (Cofre xs) = length xs
-countObjects (Nada m) = countObjects m
-countObjects (Bifurcacion xs m1 m2) = length xs + countObjects m1 + countObjects m2
-
+--countObjects (Cofre xs) = length xs
+--countObjects (Nada m) = countObjects m
+--countObjects (Bifurcacion xs m1 m2) = length xs + countObjects m1 + countObjects m2
 
 
  
