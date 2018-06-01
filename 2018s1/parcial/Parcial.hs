@@ -33,7 +33,6 @@ hasObjectAt f (Bifurcacion xs m1 m2) [] = False
 hasObjectAt f (Bifurcacion xs m1 m2) (Straight:ds) = any f xs
 hasObjectAt f (Bifurcacion xs m1 m2) (Left':ds) = hasObjectAt f m1 ds
 hasObjectAt f (Bifurcacion xs m1 m2) (Right':ds) = hasObjectAt f m2 ds
-hasObjectAt _ _ _ = error "el camino no existe en el mapa"
 
 
 longestPath :: Mapa a -> [Dir]
@@ -49,7 +48,6 @@ objectsOfLongestPath (Nada m) = objectsOfLongestPath m
 objectsOfLongestPath (Bifurcacion xs m1 m2) = let (zs,ys) = (longestPath m1,longestPath m2)
                                               in if length zs >= length ys then xs ++ (objectsOfLongestPath m1)  
                                                                            else xs ++ (objectsOfLongestPath m2)
-
 
 
 allPaths :: Mapa a -> [[Dir]]
@@ -86,15 +84,12 @@ mapM'' f = foldM (\ xs -> Cofre (map f xs)) (\ r -> Nada r) (\ xs r1 r2 -> Bifur
 hasObjectAt' :: (a -> Bool) -> Mapa a -> [Dir] -> Bool
 hasObjectAt' f m ds = foldM g h j m ds
                       where g xs [] = any f xs
-                            g xs ys = error "el camino no existe en el mapa"
                             h r [] = False
                             h r (Straight:xs) = r xs
-                            h r ys = error "el camino no existe en el mapa"
                             j xs r1 r2 [] = False
                             j xs r1 r2 (Straight:ys) = any f xs
                             j xs r1 r2 (Left':ys) = r1 ys
                             j xs r1 r2 (Right':ys) = r2 ys
-                            j xs r1 r2 _ = error "el camino no existe en el mapa"
 
 
 
@@ -104,9 +99,10 @@ longestPath' = foldM (const []) (\r -> Straight : r) g
                                                                 in if length zs >= length ys then Left' : r1 
                                                                                              else Right' : r2
 
+                                                                         
 objectsOfLongestPath' :: Mapa a -> [a]
-objectsOfLongestPath' = foldM id id g
-                              where g xs r1 r2 = let (zs,ys) = (r1,r2)
+objectsOfLongestPath' = recM id (\ r m -> r) g
+                              where g xs m1 m2 r1 r2 = let (zs,ys) = (longestPath m1, longestPath m2)
                                                  in if length zs >= length ys then xs ++ r1  
                                                                               else xs ++ r2
 
