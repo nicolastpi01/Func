@@ -120,31 +120,78 @@ allPaths' = foldM (\ xs -> [[]]) (\r -> map (Straight:) r) (\ xs r1 r2 -> (map (
 
 -- a) length . objects = countObjects
 --                                                 = ppio ext
---(length . objects) t = countObjects t
+-- (length . objects) m = countObjects m
 --                                                 = def (.)
---length (objects t) = countObjects t
+-- length (objects m) = countObjects m
 
---Demuestro por induccion estructural en t para todo t
+-- Demuestro por induccion estructural en m para todo m
 
---Caso base, t = (Cofre xs)
+-- Caso base, m = (Cofre xs)
 
---length (objects (Cofre xs))
+-- length (objects (Cofre xs))
 --                             = def objects
---length xs
+-- length xs
 
---countObjects (Cofre xs)
+-- countObjects (Cofre xs)
 --                         = def countObjects
---length xs
+-- length xs
 
 
---data Mapa a = Cofre [a] | Nada (Mapa a) | Bifurcacion [a] (Mapa a) (Mapa a) deriving (Show)
---Caso inductivo, t =   
+-- Caso inductivo, (m = Nada m1) || (m = Nada m2) || (m = Bifurcacion xs m1 m2)    
+
+-- HI)
+-- 2) length (objects m2) = countObjects m2
+-- 3) length (objects m1) = countObjects m1
+-- TI)
+-- length (objects (Bifurcacion xs m1 m2)) = countObjects (Bifurcacion xs m1 m2)
+
+-- length (objects (Bifurcacion xs m1 m2))
+--                                                       = def objects
+-- length (xs ++ (objects m1) ++ (objects m2))
+--                                                       = lema0
+-- length xs + length (objects m1) + length (objects m2)
+--                                                       = HI) 1) y 2)
+-- length xs + countObjects m1 + countObjects m2
+--                                                       = countObjects (al revés)
+-- countObjects (Bifurcacion xs m1 m2)
+
+--                          QED
 
 
---objects :: Mapa a -> [a]
---objects (Cofre xs) = xs
---objects (Nada m) = objects m
---objects (Bifurcacion xs m1 m2) = xs ++ (objects m1) ++ (objects m2)
+-- lema0 Demostración
+
+-- length (xs ++ ys) = length xs + length ys
+
+-- Demuestro por inducción estrutural en xs
+
+-- Caso base, xs = []
+
+-- length ([] ++ ys)
+--                    = def (++)
+-- length ys
+
+-- length [] + length ys
+--                        = def (++)
+-- 0 + length ys
+--                        = aritmetica
+-- length ys
+
+-- Caso inductivo, xs = (h:hs)
+
+-- HI) length (hs ++ ys) = length hs + length ys
+-- TI) length ((h:hs) ++ ys) = length (h:hs) + length ys
+
+-- length ((h:hs) ++ ys)
+--                          = def length
+-- 1 + length (hs ++ ys)
+--                           = HI)
+-- 1 + length hs + length ys
+--                           = def length (al revés)
+-- length (h:hs) + length ys
+
+--                      QED
+
+
 
 
 -- b) elem x . objects = hasObjectAt (==x)
@@ -152,10 +199,22 @@ allPaths' = foldM (\ xs -> [[]]) (\r -> map (Straight:) r) (\ xs r1 r2 -> (map (
 
 -- c) length . map f . map g . objects = countObjects . mapM (f . g)
 
+
+
+
 --countObjects (Cofre xs) = length xs
 --countObjects (Nada m) = countObjects m
 --countObjects (Bifurcacion xs m1 m2) = length xs + countObjects m1 + countObjects m2
 
+--objects :: Mapa a -> [a]
+--objects (Cofre xs) = xs
+--objects (Nada m) = objects m
+--objects (Bifurcacion xs m1 m2) = xs ++ (objects m1) ++ (objects m2)
+
+--mapM' :: (a -> b) -> Mapa a -> Mapa b
+--mapM' f (Cofre xs) = Cofre (map f xs)
+--mapM' f (Nada m) = Nada (mapM' f m)
+--mapM' f (Bifurcacion xs m1 m2) = Bifurcacion (map f xs) (mapM' f m1) (mapM' f m2)
 
  
 
