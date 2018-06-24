@@ -194,13 +194,43 @@ allPaths' = foldM (\ xs -> [[]]) (\r -> map (Straight:) r) (\ xs r1 r2 -> (map (
 
 
 
--- b) elem x . objects = hasObjectAt (==x)
 -- Suponer ya demostrada la sig. propiedad = Para todo x, as, bs : elem x (as ++ bs) = elem x as || elem x bs
+-- b) elem x . objects = hasObjectAt (==x)
+
+elem x . objects = hasObjectAt (==x)
+                                              = ppio extensionalidad
+(elem x . objects) m = hasObjectAt (==x) m
+                                              = ppio extensionalidad
+(elem x . objects) m = hasObjectAt (==x) m xs
+                                              = def (.)
+elem x (objects m) = hasObjectAt (==x) m xs
+
+Demuestro por inducción estructural en m para todo m
+
+Caso base, m = (Cofre xs)
+
+elem x (objects (Cofre xs))
+                                 = def objects
+elem x xs
+
+hasObjectAt (==x) (Cofre xs) xs
+                                 = def hasObjectAt
+
+
 
 -- c) length . map f . map g . objects = countObjects . mapM (f . g)
+             
 
 
 
+hasObjectAt :: (a -> Bool) -> Mapa a -> [Dir] -> Bool
+hasObjectAt f (Cofre xs) [] = any f xs   
+hasObjectAt f (Nada m) [] = False
+hasObjectAt f (Nada m) (Straight:ds) = hasObjectAt f m ds
+hasObjectAt f (Bifurcacion xs m1 m2) [] = False
+hasObjectAt f (Bifurcacion xs m1 m2) (Straight:ds) = any f xs
+hasObjectAt f (Bifurcacion xs m1 m2) (Left':ds) = hasObjectAt f m1 ds
+hasObjectAt f (Bifurcacion xs m1 m2) (Right':ds) = hasObjectAt f m2 ds
 
 --countObjects (Cofre xs) = length xs
 --countObjects (Nada m) = countObjects m
