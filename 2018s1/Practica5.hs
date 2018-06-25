@@ -102,8 +102,8 @@ id' = appEndo (Endo (\x -> x))
 twice :: (a -> a) -> a -> a
 twice f = appEndo (Endo f `mappend` Endo f) 
 
---compose :: (b -> c) -> (a -> b) -> (a -> c) 
---compose g f = appEndo ( (Endo g) `mappend` (Endo f) )
+compose :: (a -> a) -> (a -> a) -> (a -> a) 
+compose g f = appEndo ( (Endo g) `mappend` (Endo f) )
 
 concatMap' :: (a -> [b]) -> [a] -> [b]
 concatMap' f = mconcat . map f
@@ -160,9 +160,6 @@ concatT = tconcat
 (<$>) :: Functor f => (a->b) -> f a -> f b
 (<$>) = fmap
 
-newtype ZipList a = ZipList [a]
-
-getZipList (ZipList xs) = xs
 
 class (Functor f) => Applicative f where
   pure  :: a -> f a
@@ -174,11 +171,6 @@ instance Applicative [] where
   fs <*> xs = [f x | f <- fs, x <- xs]
 
 
---No funciona, tiene que ser declarado como Functor también
---instance Applicative ZipList where
---   pure x = ZipList (repeat x)
---   ZipList fs <*> ZipList xs = ZipList (zipWith ($) fs xs)
-
 
 --indicar el resultado de las siguientes expresiones
 
@@ -189,6 +181,17 @@ instance Applicative [] where
 
 
 --2. Dada la siguiente implementación de Applicative Functor para listas
+
+newtype ZipList a = ZipList [a]
+
+getZipList (ZipList xs) = xs
+
+instance Functor ZipList where
+   fmap f (ZipList xs) = ZipList (fmap f xs)
+
+instance Applicative ZipList where
+   pure x = ZipList (repeat x)
+   ZipList fs <*> ZipList xs = ZipList (zipWith ($) fs xs)
 
 --indicar el resultado de las siguientes expresiones
 
