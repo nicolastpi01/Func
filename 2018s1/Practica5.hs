@@ -15,13 +15,6 @@ foldT f g (NodeT x t1 t2) = f x (foldT f g t1) (foldT f g t2)
 class Semigroup a where
   (<>) :: a -> a -> a
 
-
---class Semigroup a => Monoid a where
---  mempty :: a
---  mappend :: a -> a -> a 
---  mconcat :: [a] -> a
---  mconcat = foldr mappend mempty
-
 class Monoid a where
   mempty :: a
   mappend :: a -> a -> a
@@ -110,14 +103,13 @@ twice :: (a -> a) -> a -> a
 twice f = appEndo (Endo f `mappend` Endo f) 
 
 --compose :: (b -> c) -> (a -> b) -> (a -> c) 
---compose g f = appEndo (Endo (f . g) )
+--compose g f = appEndo ( (Endo g) `mappend` (Endo f) )
 
 concatMap' :: (a -> [b]) -> [a] -> [b]
 concatMap' f = mconcat . map f
 
---applyN :: Int -> (a -> a) -> a -> a
---applyN 0 f x = x
---applyN n f x = Endo f `mappend`(Endo (applyN (n-1) f x))
+applyN :: Int -> (a -> a) -> a -> a
+applyN n = appEndo . mconcat . map Endo . replicate n
 
 ntimes :: Monoid a => Int -> a -> a
 ntimes 0 x = mempty
@@ -165,19 +157,61 @@ concatT = tconcat
 --3.1 Applicative Functor
 -- 1. Dada la siguiente implementación de Applicative Functor para listas
 
---NO FUNCIONA EL FUNCTOR
---instance Applicative [] where
---pure x = [x]
---fs <*> xs = [f x | f <- fs, x <- xs]
+(<$>) :: Functor f => (a->b) -> f a -> f b
+(<$>) = fmap
+
+newtype ZipList a = ZipList [a]
+
+getZipList (ZipList xs) = xs
+
+class (Functor f) => Applicative f where
+  pure  :: a -> f a
+  (<*>) :: f (a -> b) -> f a -> f b
+
+
+instance Applicative [] where
+  pure x = [x]
+  fs <*> xs = [f x | f <- fs, x <- xs]
+
+
+--No funciona, tiene que ser declarado como Functor también
+--instance Applicative ZipList where
+--   pure x = ZipList (repeat x)
+--   ZipList fs <*> ZipList xs = ZipList (zipWith ($) fs xs)
+
 
 --indicar el resultado de las siguientes expresiones
 
---[(*2),(+100)] <*> [1,2,3] = [102,104,106]
---[(+),(*)] <*> [1,2] <*> [3,4] = []
---(++) <$> ["hola","chau","gracias"] <*> ["?","!","."]
---filter (>50) $ (*) <$> [2,5,10] <*> [8,10,11]
+--[(*2),(+100)] <*> [1,2,3] = [2,4,6,101,102,103]
+--[(+),(*)] <*> [1,2] <*> [3,4] = [4,5,5,6,3,4,6,8]
+--(++) <$> ["hola","chau","gracias"] <*> ["?","!","."] = ["hola?","hola!","hola.","chau?","chau!","chau.","gracias?","gracias!","gracias."]
+--filter (>50) $ (*) <$> [2,5,10] <*> [8,10,11] = [55,80,100,110]
 
 
+--2. Dada la siguiente implementación de Applicative Functor para listas
+
+--indicar el resultado de las siguientes expresiones
+
+--getZipList $ (+) <$> ZipList [1,2,3] <*> ZipList [100,100,100] = [101,102,103]
+--getZipList $ (+) <$> ZipList [1,2,3] <*> pure 100
+--getZipList $ max <$> ZipList [1,2,3,4,5,3] <*> ZipList [5,3,1,2]
+--getZipList $ (,,) <$> ZipList "hola" <*> ZipList "que" <*> ZipList "tal"
+
+
+--3. Describir el comportamiento de la siguiente definición (Pendiente, muy dificil)
+sequenceA :: (Applicative f) => [f a] -> f [a]
+sequenceA [] = pure []
+sequenceA (x:xs) = (:) <$> x <*> sequenceA xs
+
+--4. Escribir la versión monádica de sequenceA, llamada simplemente sequence
+
+--5. (Desafío) Demostrar que la siguiente definición es igual a la anterior
+
+liftA2 :: (Applicative f) => (a -> b -> c) -> f a -> f b -> f c
+liftA2 f a b = f <$> a <*> b
+
+sequenceA' :: (Applicative f) => [f a] -> f [a]
+sequenceA' = foldr (liftA2 (:)) (pure [])
 
 
 -------------------------------------------------------------------------------------------------------------------------------------------
@@ -200,9 +234,9 @@ productoCartesiano xs ys = do
                            return (x,y) 
 
 
-data Resultado = Cara | Seca deriving (Show)
+data Lado = Cara | Seca deriving (Show)
 
-tiradas :: Int -> [[Resultado]]
+tiradas :: Int -> [[Lado]]
 tiradas 0 = return []
 tiradas n =  do
                xs <- tiradas (n-1)
@@ -216,23 +250,12 @@ tiradas n =  do
 
 
 
-
-
-
-
-
-
 --6) Funciones Genéricas
 
 -- Definir las siguientes funciones estándar sobre mónadas en general (ver ejemplos en Hoogle):
 
---class Functor m => Monad m where
---  return :: a -> m a
---  (>>=) :: m a -> (a -> m b) -> m b
-
--- PREGUNTAR
 void :: Monad m => m a -> m ()
-void mx = return ()
+void mx = mx >> return ()
 
 when :: Monad f => Bool -> f () -> f ()
 when b mx = if b then mx else return ()
@@ -282,9 +305,17 @@ mapM' f = sequence . map f
 mapM_ :: Monad m => (a -> m b) -> [a] -> m ()
 mapM_ f = sequence_ . map f
 
--- NO FUNCA!!!
---filterM :: (Monad m) => (a -> m Bool) -> [a] -> m [a]
---filterM f xs = sequence . map f xs
+
+-- Se puede usar foldr
+filterM :: (Monad m) => (a -> m Bool) -> [a] -> m [a]
+filterM f [] = return []
+filterM f (x:xs) = do
+                     b  <- (f x)
+                     ys <- filterM f xs
+                     if b then return (x:ys) 
+                          else return ys 
+                       
+
 
 forM :: (Monad m) => [a] -> (a -> m b) -> m [b]
 forM xs f = mapM f xs
@@ -302,25 +333,22 @@ forever mx = mx >> forever mx
                 my
                 
   
--- Que es aplicative? FALLA!!!                     
+-- Que es aplicative? FALLA!!! sequence no va!!!                     
 --zipWithM :: Applicative m => (a -> b -> m c) -> [a] -> [b] -> m [c]
---zipWithM f xs = sequence . zipWith f xs
+--zipWithM f = sequence . zipWith f 
 
+-- Revisar los folds // están mal
+foldM :: Monad m => (b -> a -> m b) -> b -> [a] -> m b
+foldM f x = foldr ((>>) . (f x)) (return x)
 
---foldM :: Monad m => (b -> a -> m b) -> b -> [a] -> m b
---foldM f x = foldr (\ y r -> f x y >> r) (return ())
-
-
---foldM_ :: (Monad m) => (b -> a -> m b) -> b -> [a] -> m ()
---foldM_ f x = foldr (\ y r -> f x y >> r) (return ())
-
+foldM_ :: (Monad m) => (b -> a -> m b) -> b -> [a] -> m ()
+foldM_ f x = foldr ((>>) . (f x)) (return ())
 
 replicateM :: Monad m => Int -> m a -> m [a]
 replicateM n = sequence . replicate n 
 
 replicateM_ :: Monad m => Int -> m a -> m ()
 replicateM_ n = sequence_ . replicate n
-
 
 
 
