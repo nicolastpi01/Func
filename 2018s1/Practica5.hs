@@ -213,6 +213,48 @@ liftA2 f a b = f <$> a <*> b
 sequenceA' :: (Applicative f) => [f a] -> f [a]
 sequenceA' = foldr (liftA2 (:)) (pure [])
 
+-------------------------------------------------------------------------------------------------------------------------------------------
+
+--4)                                                        MAYBE
+
+--4.1) Applicative Functor
+
+--Dada la siguiente implementación de Applicative Functor para Maybe indicar el resultado de las siguientes expresiones
+instance Applicative Maybe where
+  pure = Just
+  Nothing <*> _ = Nothing
+  (Just f) <*> m = fmap f m
+
+--Just (+3) <*> Just 9 = Just 12
+--pure (++"hahah") <*> Nothing = Nothing
+--Nothing <*> Just "woot" = Nothing
+--pure (.) <*> Just (+1) <*> Just (+2) <*> 3 = ROMPE!!!!!!!!!!!!
+
+
+--4.2)
+--                                                     MAYBE MONAD
+
+--Dadas las siguientes definiciones dar una definición monádica para f:
+tailM :: [a] -> Maybe [a]
+tailM [] = Nothing
+tailM (x:xs) = Just xs
+
+initM :: [a] -> Maybe [a]
+initM [] = Nothing
+initM [x] = Just []
+initM (x:xs) = do
+                 zs <- (initM xs)
+                 Just (x:zs)
+
+
+f :: Maybe [Int]
+f = do
+      xs <- tailM [1,2,3,4,5]
+      ys <- initM xs
+      zs <- tailM ys
+      js <- initM zs
+      return js
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------
 
