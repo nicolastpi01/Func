@@ -153,8 +153,10 @@ concatT = tconcat
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
---3) List
---3.1 Applicative Functor
+
+--                                                          LIST - APPLICATIVE FUNCTOR
+--3)
+--3.1)
 -- 1. Dada la siguiente implementación de Applicative Functor para listas
 
 (<$>) :: Functor f => (a->b) -> f a -> f b
@@ -195,20 +197,20 @@ instance Applicative ZipList where
 
 --indicar el resultado de las siguientes expresiones
 
---getZipList $ (+) <$> ZipList [1,2,3] <*> ZipList [100,100,100] = [101,102,103]
---getZipList $ (+) <$> ZipList [1,2,3] <*> pure 100
---getZipList $ max <$> ZipList [1,2,3,4,5,3] <*> ZipList [5,3,1,2]
---getZipList $ (,,) <$> ZipList "hola" <*> ZipList "que" <*> ZipList "tal"
+--getZipList $ (+) <$> ZipList [1,2,3] <*> ZipList [100,100,100] = [101,102,103]    
+--getZipList $ (+) <$> ZipList [1,2,3] <*> pure 100 = [101,102,103]
+--getZipList $ max <$> ZipList [1,2,3,4,5,3] <*> ZipList [5,3,1,2] = [5,3,3,4]
+--getZipList $ (,,) <$> ZipList "hola" <*> ZipList "que" <*> ZipList "tal" = [('h','q','t'),('o','u','a'),('l','e','l')]
 
 
---3. Describir el comportamiento de la siguiente definición (Pendiente, muy dificil)
+--3. Describir el comportamiento de la siguiente definición (PENDIENTE)
 sequenceA :: (Applicative f) => [f a] -> f [a]
 sequenceA [] = pure []
 sequenceA (x:xs) = (:) <$> x <*> sequenceA xs
 
---4. Escribir la versión monádica de sequenceA, llamada simplemente sequence
+--4. Escribir la versión monádica de sequenceA, llamada simplemente sequence (PENDIENTE)
 
---5. (Desafío) Demostrar que la siguiente definición es igual a la anterior
+--5. (Desafío) Demostrar que la siguiente definición es igual a la anterior (PENDIENTE)
 
 liftA2 :: (Applicative f) => (a -> b -> c) -> f a -> f b -> f c
 liftA2 f a b = f <$> a <*> b
@@ -218,9 +220,9 @@ sequenceA' = foldr (liftA2 (:)) (pure [])
 
 -------------------------------------------------------------------------------------------------------------------------------------------
 
---4)                                                        MAYBE
+--3)                                                    MAYBE - APPLICATIVE FUNCTOR 
 
---4.1) Applicative Functor
+--3.1) 
 
 --Dada la siguiente implementación de Applicative Functor para Maybe indicar el resultado de las siguientes expresiones
 instance Applicative Maybe where
@@ -234,8 +236,8 @@ instance Applicative Maybe where
 --pure (.) <*> Just (+1) <*> Just (+2) <*> 3 = ROMPE!!!!!!!!!!!!
 
 
---4.2)
---                                                     MAYBE MONAD
+--3.2)
+--                                                           MAYBE MONAD
 
 --Dadas las siguientes definiciones dar una definición monádica para f:
 tailM :: [a] -> Maybe [a]
@@ -258,19 +260,24 @@ f = do
       js <- initM zs
       return js
 
-
+f' = tailM [1..5] >>= initM >>= tailM >>= initM
 -------------------------------------------------------------------------------------------------------------------------------------------
 
---                                                           LIST MONAD
+--                                                           4) LIST MONAD
 
---3.2) List Monad
+--La definición de Monad de listas es:
+--instance Monad [] where
+--  return x = [x]
+--  xs >>= f = concat (map f xs)
+
+--4.1) List Monad
 --a) Indicar el resultado de las siguientes expresiones:
 --[3,4,5] >>= \x -> [x,-x] = [3,-3,4,-4,5,-5]  
 --[] >>= \x -> ["bad","mad","rad"] = []
 --[1,2,3] >>= \x -> [] = []
 --[1,2,3] >>= (\x -> [x,x]) >>= (\y -> return [y,y*y]) = [[1,1],[1,1],[2,4],[2,4],[3,9],[3,9]]
 
---b) Definir las siguientes funciones utilizando la mónada de listas
+--4.2) Definir las siguientes funciones utilizando la mónada de listas
 
 productoCartesiano :: [a] -> [b] -> [(a, b)]
 productoCartesiano xs ys = do
@@ -288,14 +295,101 @@ tiradas n =  do
                [Seca:xs, Cara:xs]
 
 
+-- filterM :: Monad m => (a -> m Bool) -> [a] -> m [a]
+-- específicamente para esta mónada
+-- filterM :: (a -> [Bool]) -> [a] -> [[a]]
+
 --(Desafío) Se recomienda usar filterM (ver Hoogle)
---powerset :: [a] -> [[a]]
+--Devuelve todas las sublistas (pensar en subconjuntos) posibles.
+powerset :: [a] -> [[a]]
+powerset xs = filterM (\x -> [True, False]) xs
 
 ---------------------------------------------------------------------------------------------------------------------------------
 
+--                                                        5) READER MONAD
+--5.1) Functor
+--Dada la siguiente instancia de Functor
+instance Functor ((->) r) where
+   fmap f g = (\x -> f (g x))
+-- Equivalente a fmap = (.)
+
+--Indicar el resultado de las siguientes expresiones:
+--fmap (*3) (+100) 1 = 303
+--fmap (show . (*3)) (*100) 1 = "300"
+--fmap (replicate 3) (const 3) 3 = [3,3,3]
+--fmap (replicate 3) (+3) 3 = [6,6,6] 
+--fmap (const 3) (const 3) 3 = 3 
+
+--5.2) Expresiones Aritméticas con variables
+--Dada la siguiente representación de expresiones aritméticas
+
+--data Env = Map String Int
+
+--data Exp = Sum Exp Exp | Var String | Const Int
 
 
---6) Funciones Genéricas
+--Completar!!!!!!
+--getValue :: String -> Env -> Int
+--getValue s e = case lookup s e of
+--               Nothing -> 0
+--               Just v  -> v
+
+--completar la definición de eval :: Exp -> Reader Env Int (PENDIENTE)
+
+--5.3)
+--Propiedades
+--Demuestre que para la instancia Functor de (->) r las siguientes propiedades (PENDIENTE)
+
+--fmap id = id
+
+--fmap (f . g) = fmap f . fmap g
+
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+--                                                 6) WRITER
+
+--1) Definir la siguiente función que dado un número se queda con los elementos que son mayores a éste, informando qué elementos son agregados al resultado:
+
+newtype Writer w a = Writer (a,w)
+-- w es un monoide
+
+runWriter (Writer (a,b)) = (a,b)
+
+instance (Monoid w) => Monad (Writer w) where  
+    return x = Writer (x, mempty)  
+    (Writer (x,v)) >>= f = let (Writer (y, v')) = f x in Writer (y, v `mappend` v')  
+
+
+tell :: Monoid w => w -> Writer w ()
+tell w = Writer ((), w)
+
+mayoresA :: Int -> [Int] -> Writer [String] [Int]
+mayoresA n = foldr g (return [])
+  where g x r = if x > n
+                   then tell ["Me quedo con: " ++ show x] >> r
+                        -- es lo mismo que
+                        -- do 
+                        -- tell ["Me quedo con: " ++ show x]
+                        -- r
+                   else r
+
+--2) Dada la siguiente definición para obtener el Máximo Común Dividor
+
+gcd' :: Int -> Int -> Int
+gcd' a b = if b == 0 then a else gcd' b (a `mod` b)
+
+--transformarla a una versión monádica que indique el valor de los parámetros en cada momento
+
+gcd'' :: Int -> Int -> Writer [Int] Int
+gcd'' a b =
+          do
+            tell [a, b]
+            if b == 0 then return a else gcd'' b (a `mod` b)
+
+----------------------------------------------------------------------------------------------------------------------------------
+
+--                                                   8) FUNCIONES GENÉRICAS
 
 -- Definir las siguientes funciones estándar sobre mónadas en general (ver ejemplos en Hoogle):
 
@@ -306,6 +400,7 @@ when :: Monad f => Bool -> f () -> f ()
 when b mx = if b then mx else return ()
 
 
+-- Esto es fmap
 liftM :: Monad m => (a -> b) -> m a -> m b
 liftM f mx = do
                x <- mx
@@ -316,14 +411,14 @@ liftM2 :: Monad m => (a -> b -> c) -> m a -> m b -> m c
 liftM2 f mx my = do
                    x <- mx
                    y <- my
-                   return (f x y) 
+                   return $ f x y 
 
 
 appM :: (Monad m) => m (a -> b) -> m a -> m b
 appM mf mx = do
                f <- mf
                x <- mx
-               return (f x)
+               return $ f x
 
 
 join :: (Monad m) => m (m a) -> m a
@@ -332,11 +427,11 @@ join mmx = do
              mx
 
 sequence' :: Monad m => [m a] -> m [a]
-sequence' [] = return []
-sequence' (mx:mxs) = do
-                      x  <- mx
-                      xs <- sequence' mxs
-                      return (x:xs)
+sequence' = foldr g (return [])
+            where g m r = do
+                            x <- m
+                            xs <- r
+                            return (x:xs)
 
 
 sequence'_ :: Monad m => [m a] -> m ()
@@ -344,26 +439,28 @@ sequence'_ = foldr (>>) (return ())
 
 
 mapM' :: Monad m => (a -> m b) -> [a] -> m [b]
-mapM' f = sequence . map f
+mapM' f = foldr g (return [])
+          where g y r = do
+                          x  <- f y
+                          xs <- r
+                          return (x:xs)
 
 
 mapM_ :: Monad m => (a -> m b) -> [a] -> m ()
-mapM_ f = sequence_ . map f
+mapM_ f = foldr (\x r -> f x >> r) (return ())
 
 
--- Se puede usar foldr
+-- En vez de liftM deberia poder usar fmap
 filterM :: (Monad m) => (a -> m Bool) -> [a] -> m [a]
-filterM f [] = return []
-filterM f (x:xs) = do
-                     b  <- (f x)
-                     ys <- filterM f xs
-                     if b then return (x:ys) 
-                          else return ys 
-                       
+filterM f = foldr g (return [])
+            where g x r = do
+                            b <- (f x)
+                            if b then liftM (x:) r
+                                 else r
 
 
 forM :: (Monad m) => [a] -> (a -> m b) -> m [b]
-forM xs f = mapM f xs
+forM = flip mapM 
 
 
 (>=>) :: Monad m => (a -> m b) -> (b -> m c) -> a -> m c
@@ -378,37 +475,35 @@ forever mx = mx >> forever mx
                 my
                 
   
--- Que es aplicative? FALLA!!! sequence no va!!!                     
+--El código esta bien, pero hay que resolver algo antes
 --zipWithM :: Applicative m => (a -> b -> m c) -> [a] -> [b] -> m [c]
---zipWithM f = sequence . zipWith f 
+--zipWithM f xs ys = sequence (zipWith f xs ys)
 
 -- Revisar los folds // están mal
-foldM :: Monad m => (b -> a -> m b) -> b -> [a] -> m b
-foldM f x = foldr ((>>) . (f x)) (return x)
+--foldM :: Monad m => (b -> a -> m b) -> b -> [a] -> m b
+--foldM f x = foldr (\ y r -> do
+--                              z <- r
+--                              return (f z y) ) (return x)
 
-foldM_ :: (Monad m) => (b -> a -> m b) -> b -> [a] -> m ()
-foldM_ f x = foldr ((>>) . (f x)) (return ())
+--foldM_ :: (Monad m) => (b -> a -> m b) -> b -> [a] -> m ()
+--foldM_ f x = foldr (\ y r -> (>>) . (f x) ) (return ())
+
+
+-- No tipa
+--foldM :: Monad m => (b -> a -> m b) -> b -> [a] -> m b
+--foldM f z = foldr g (return z)
+--            where g rm x = rm >>= (\r -> f r x)
+
+-- Falta void
+--foldM_ :: (Monad m) => (b -> a -> m b) -> b -> [a] -> m ()
+--foldM_ f z xs = void (foldM f z xs)
+
 
 replicateM :: Monad m => Int -> m a -> m [a]
-replicateM n = sequence . replicate n 
+replicateM n m = sequence (replicate n m)
 
 replicateM_ :: Monad m => Int -> m a -> m ()
-replicateM_ n = sequence_ . replicate n
-
-
-
-
---7) Writer
---1. Definir la siguiente función que dado un número se queda con los elementos que son mayores
---a éste, informando qué elementos son agregados al resultado:
---mayoresA :: Int -> [Int] -> Writer [String] [Int]
-
---2. Dada la siguiente definición para obtener el Máximo Común Dividor
---gcd’ :: Int -> Int -> Int
---gcd’ a b = if b == 0 then a else gcd’ b (a ‘mod‘ b)
---transformarla a una versión monádica que indique el valor de los parámetros en cada mo-
---mento
-
+replicateM_ n m = sequence_ (replicate n m)
 
 
 
