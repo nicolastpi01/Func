@@ -576,6 +576,7 @@ program = do
             when (puedeMover Der t) $ mover Der
             ponerNT 10 Azul
 
+
 ponerNT :: Int -> Color -> State Tablero ()
 ponerNT 0 _ = return ()
 ponerNT n c = do
