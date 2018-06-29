@@ -389,6 +389,123 @@ gcd'' a b =
 
 ----------------------------------------------------------------------------------------------------------------------------------
 
+--7)                                                   STATE MONAD
+
+
+--7.1)Stack
+--Dada la siguiente definición de una Stack
+
+--newtype Stack a = [a]
+
+--newtype Stack a = S [a]
+
+type Stack a = [a]
+
+newtype State s a = State (s -> (a,s))
+
+instance Monad (State s) where
+  return x = State $ \s -> (x,s)
+  (State h) >>= f = State $ \s -> let (a, newState) = h s
+                                      (State g) = f a
+                                      in g newState
+
+runState (State f) s = f s
+
+
+-- 1) Transformar dicha interfaz a una versión monádica con estado
+
+-- pop :: Stack -> (Int,Stack)
+-- pop (x:xs) = (x,xs)
+-- push :: Int -> Stack -> Stack
+-- push a xs = a:xs
+
+-- Esto esta en slice y no funciona
+-- pop :: State (Strack a) a
+-- pop xs (head xs, tail xs)
+
+pop :: State (Stack a) a
+pop = State (\xs -> (head xs, tail xs) )
+
+push :: a -> State (Stack a) ()
+push x = State (\ xs -> ((), x:xs) ) 
+     
+modify :: (s -> s) -> State s ()
+modify f = State (\s -> ((), f s))
+
+
+{-
+f'' :: State (Stack Int) Int
+f'' = do
+        push 4
+        pop
+        x <- pop
+        return x
+
+-}
+
+dropN :: Int -> State (Stack a) ()
+dropN 0 = return ()
+dropN n = do
+            pop
+            dropN (n-1)
+            
+
+takeN :: Int -> State (Stack a) (Stack a)
+takeN 0 = return [] 
+takeN n = do
+            x  <- pop
+            xs <- takeN (n-1)
+            return (x:xs)
+
+
+push' :: a -> State (Stack a) ()
+push' x = modify (x:) 
+
+incr :: State Int ()
+incr = modify (+1)
+
+get :: State s s
+get = State $ \s -> (s,s)
+
+put :: s -> State s ()
+put newState = State $ \s -> ((), newState) 
+
+-- vacia el estado pero lo guarda en el stack de datos (el return)
+vaciar :: State (Stack a) (Stack a)
+vaciar = do
+         xs <- get
+         put []
+         return xs
+           
+--2) implementar con esa interfaz las siguientes operaciones
+
+dropN' :: Int -> State (Stack a) ()
+dropN' 0 = return ()
+dropN' n = do
+             pop
+             dropN' (n-1)
+
+takeN' :: Int -> State (Stack a) (Stack a)
+takeN' 0 = return []
+takeN' n = do
+             x  <- pop
+             xs <- takeN' (n-1)
+             return (x:xs)
+
+
+
+
+
+
+
+
+
+
+
+
+
+----------------------------------------------------------------------------------------------------------------------------------
+
 --                                                   8) FUNCIONES GENÉRICAS
 
 -- Definir las siguientes funciones estándar sobre mónadas en general (ver ejemplos en Hoogle):
