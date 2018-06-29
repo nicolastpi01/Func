@@ -389,15 +389,11 @@ gcd'' a b =
 
 ----------------------------------------------------------------------------------------------------------------------------------
 
---7)                                                     STATE MONAD
+--                                                     7) STATE MONAD - STACK
 
 
---7.1)Stack
+--7.1)
 --Dada la siguiente definición de una Stack
-
---newtype Stack a = [a]
-
---newtype Stack a = S [a]
 
 type Stack a = [a]
 
@@ -420,7 +416,7 @@ runState (State f) s = f s
 -- push a xs = a:xs
 
 -- Esto esta en slice y no funciona
--- pop :: State (Strack a) a
+-- pop :: State (Stack a) a
 -- pop xs (head xs, tail xs)
 
 pop :: State (Stack a) a
@@ -518,11 +514,22 @@ data Tablero = T [(Int,Celda)] Int deriving (Show)
 --                  fila      cabezal
 
 
---tableroVacio :: Int -> Int -> Tablero
---tableroVacio n m = T [()] 0
+--Tenés que crear un tablero con n celdas vacías, con el cabezal parado en la celda inicial.
+tableroVacio :: Int -> Tablero
+tableroVacio n = T (fullT n 0) 0
+ 
+fullT :: Int -> Int -> [(Int, Celda)]
+fullT 0 p = [(p, C 0 0)]
+fullT n p = armarPos p celdaVacia : fullT (n-1) (p+1)
 
---moverAux :: Dir -> Tablero -> Tablero
--- ......
+armarPos :: Int -> Celda -> (Int, Celda)
+armarPos n c = (n, c)
+
+celdaVacia :: Celda
+celdaVacia = C 0 0
+ 
+moverAux Izq (T xs n) = T xs (n-1)
+moverAux Der (T xs n) = T xs (n+1)
 
 ponerAux :: Color -> Tablero -> Tablero 
 ponerAux c (T xs n)  = T (map g xs) n
@@ -533,17 +540,19 @@ ponerAux c (T xs n)  = T (map g xs) n
 poner'' Negro (C n a) = C (n+1) a
 poner'' Azul  (C n a) = C n (a+1) 
 
-
--- Esto está bien
 poner :: Color -> State Tablero ()
 poner c = modify (ponerAux c)
 
--- Esto está bien
---mover :: Dir -> State Tablero ()
---mover d = modify moverAux d
+mover :: Dir -> State Tablero ()
+mover d = modify (moverAux d)
 
---nroBolitas :: Color -> Tablero -> Int
+nroBolitas :: Color -> Tablero -> Int
+nroBolitas c (T xs n) = foldr g 0 xs
+                      where g (i, celda) r = nroBolitasEnCelda c celda + r   
 
+nroBolitasEnCelda :: Color -> Celda -> Int
+nroBolitasEnCelda Azul (C n a) = a
+nroBolitasEnCelda Negro (C n a) = n
 
 --2) Escribir el siguiente programa con dicha implementación, que se ejecute sobre un tablero inicial vacío.
 
@@ -563,8 +572,9 @@ program = do
             ponerNT 10 Negro
             ponerNT 5 Azul
             moverNT 3 Der
-            t <- get' --get de a retorna el state de tipo a
+            t <- get 
             when (puedeMover Der t) $ mover Der
+            ponerNT 10 Azul
 
 ponerNT :: Int -> Color -> State Tablero ()
 ponerNT 0 _ = return ()
@@ -578,8 +588,6 @@ moverNT n d = do
                 mover d
                 moverNT (n-1) d
 
-get' :: State s a
-get' = State $ \s -> (s,( ))
 
 ----------------------------------------------------------------------------------------------------------------------------------
 
