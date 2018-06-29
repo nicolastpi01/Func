@@ -1,4 +1,4 @@
- 
+import System.Random 
 --                                                       PRÁCTICA 5 -- MONADAS
 
 
@@ -325,7 +325,7 @@ instance Functor ((->) r) where
 
 --data Env = Map String Int
 
---data Exp = Sum Exp Exp | Var String | Const Int
+--data Exp = Sum Exp Exp | Var String | Const Int deriving (Show)
 
 
 --Completar!!!!!!
@@ -389,7 +389,7 @@ gcd'' a b =
 
 ----------------------------------------------------------------------------------------------------------------------------------
 
---7)                                                   STATE MONAD
+--7)                                                     STATE MONAD
 
 
 --7.1)Stack
@@ -494,15 +494,92 @@ takeN' n = do
 
 
 
+randomSt :: (RandomGen g, Random a) => State g a 
+randomSt = State random
+
+threeCoins :: State StdGen (Int,Int,Int)
+threeCoins = do
+               a <- randomSt
+               b <- randomSt
+               c <- randomSt
+               return (a,b,c)
 
 
 
 
+--7.2                                               GOBSTONES / MONAD STATE
+--1) Dar una implementación de las operaciones de Gobstones donde el estado sea un tablero y los comandos tengan tipo State Tablero ().
 
 
+data Color = Azul | Negro deriving (Show)
+data Dir = Izq | Der deriving (Show)
+data Celda = C Int Int deriving (Show) 
+data Tablero = T [(Int,Celda)] Int deriving (Show)
+--                  fila      cabezal
 
 
+--tableroVacio :: Int -> Int -> Tablero
+--tableroVacio n m = T [()] 0
 
+--moverAux :: Dir -> Tablero -> Tablero
+-- ......
+
+ponerAux :: Color -> Tablero -> Tablero 
+ponerAux c (T xs n)  = T (map g xs) n
+  where g (i, celda) = if i == n
+                          then (i, poner'' c celda) 
+                          else (i, celda)
+
+poner'' Negro (C n a) = C (n+1) a
+poner'' Azul  (C n a) = C n (a+1) 
+
+
+-- Esto está bien
+poner :: Color -> State Tablero ()
+poner c = modify (ponerAux c)
+
+-- Esto está bien
+--mover :: Dir -> State Tablero ()
+--mover d = modify moverAux d
+
+--nroBolitas :: Color -> Tablero -> Int
+
+
+--2) Escribir el siguiente programa con dicha implementación, que se ejecute sobre un tablero inicial vacío.
+
+-- program {
+--           PonerN(10, Negro)
+--           PonerN(5, Azul)
+--           moverN(3, Der)
+--           if (puedeMover(Der)) { mover(Der) }
+-- }
+
+puedeMover :: Dir -> Tablero -> Bool
+puedeMover Izq (T xs n) = n > 0
+puedeMover Der (T xs n) = n < (length xs - 1)
+
+program :: State Tablero ()
+program = do
+            ponerNT 10 Negro
+            ponerNT 5 Azul
+            moverNT 3 Der
+            t <- get' --get de a retorna el state de tipo a
+            when (puedeMover Der t) $ mover Der
+
+ponerNT :: Int -> Color -> State Tablero ()
+ponerNT 0 _ = return ()
+ponerNT n c = do
+               poner c
+               ponerNT (n-1) c
+
+moverNT :: Int -> Dir -> State Tablero ()
+moverNT 0 _ = return ()
+moverNT n d = do
+                mover d
+                moverNT (n-1) d
+
+get' :: State s a
+get' = State $ \s -> (s,( ))
 
 ----------------------------------------------------------------------------------------------------------------------------------
 
