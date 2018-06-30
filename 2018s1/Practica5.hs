@@ -1,4 +1,4 @@
-import System.Random 
+
 --                                                       PRÁCTICA 5 -- MONADAS
 
 
@@ -154,7 +154,6 @@ concatT = tconcat
 
 
 -----------------------------------------------------------------------------------------------------------------------------------------
-
 
 --                                                3) LIST - APPLICATIVE FUNCTOR
 
@@ -510,20 +509,6 @@ takeN' n = do
              x  <- pop
              xs <- takeN' (n-1)
              return (x:xs)
-
-
-
-randomSt :: (RandomGen g, Random a) => State g a 
-randomSt = State random
-
-threeCoins :: State StdGen (Int,Int,Int)
-threeCoins = do
-               a <- randomSt
-               b <- randomSt
-               c <- randomSt
-               return (a,b,c)
-
-
 
 
 --                                                  GOBSTONES / MONAD STATE
