@@ -511,6 +511,7 @@ takeN' n = do
              return (x:xs)
 
 
+
 --                                                  GOBSTONES / MONAD STATE
 --7.2)
 --1) Dar una implementación de las operaciones de Gobstones donde el estado sea un tablero y los comandos tengan tipo State Tablero ().
@@ -691,24 +692,14 @@ forever mx = mx >> forever mx
 --zipWithM :: Applicative m => (a -> b -> m c) -> [a] -> [b] -> m [c]
 --zipWithM f xs ys = sequence (zipWith f xs ys)
 
--- Revisar los folds // están mal
---foldM :: Monad m => (b -> a -> m b) -> b -> [a] -> m b
---foldM f x = foldr (\ y r -> do
---                              z <- r
---                              return (f z y) ) (return x)
 
---foldM_ :: (Monad m) => (b -> a -> m b) -> b -> [a] -> m ()
---foldM_ f x = foldr (\ y r -> (>>) . (f x) ) (return ())
+foldM :: Monad m => (b -> a -> m b) -> b -> [a] -> m b
+foldM f z = foldr g (return z)
+            where g x rm = rm >>= (\r -> f r x)
 
 
--- No tipa
---foldM :: Monad m => (b -> a -> m b) -> b -> [a] -> m b
---foldM f z = foldr g (return z)
---            where g rm x = rm >>= (\r -> f r x)
-
--- Falta void
---foldM_ :: (Monad m) => (b -> a -> m b) -> b -> [a] -> m ()
---foldM_ f z xs = void (foldM f z xs)
+foldM_ :: (Monad m) => (b -> a -> m b) -> b -> [a] -> m ()
+foldM_ f z xs = void (foldM f z xs)
 
 
 replicateM :: Monad m => Int -> m a -> m [a]
