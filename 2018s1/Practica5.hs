@@ -25,7 +25,9 @@ class Monoid a where
 --Donde se cumple que mempty es el neutro de mappend, y además mappend es asociativa (técni-
 --camente <> y mappend son sinónimos).
 
---1. Definir instancias de Monoid para los siguientes tipos de datos:
+-- 1)                                                    MONOIDS
+
+--Definir instancias de Monoid para los siguientes tipos de datos:
 
 newtype Sum = Sum Int
 
@@ -140,7 +142,7 @@ concatT = tconcat
 
 ----------------------------------------------------------------------------------------------------------------------------------------
 
---2) Functors
+--                                                       2) FUNCTORS 
 --2.1)
 --Ejemplos
 --Indicar el resultado de las siguientes expresiones:
@@ -154,8 +156,8 @@ concatT = tconcat
 -----------------------------------------------------------------------------------------------------------------------------------------
 
 
---                                                          LIST - APPLICATIVE FUNCTOR
---3)
+--                                                3) LIST - APPLICATIVE FUNCTOR
+
 --3.1)
 -- 1. Dada la siguiente implementación de Applicative Functor para listas
 
@@ -220,7 +222,7 @@ sequenceA' = foldr (liftA2 (:)) (pure [])
 
 -------------------------------------------------------------------------------------------------------------------------------------------
 
---3)                                                    MAYBE - APPLICATIVE FUNCTOR 
+--                                                    3) MAYBE - APPLICATIVE FUNCTOR 
 
 --3.1) 
 
@@ -236,9 +238,9 @@ instance Applicative Maybe where
 --pure (.) <*> Just (+1) <*> Just (+2) <*> 3 = ROMPE!!!!!!!!!!!!
 
 
---3.2)
 --                                                           MAYBE MONAD
 
+--3.2)
 --Dadas las siguientes definiciones dar una definición monádica para f:
 tailM :: [a] -> Maybe [a]
 tailM [] = Nothing
@@ -261,6 +263,7 @@ f = do
       return js
 
 f' = tailM [1..5] >>= initM >>= tailM >>= initM
+
 -------------------------------------------------------------------------------------------------------------------------------------------
 
 --                                                           4) LIST MONAD
@@ -323,18 +326,38 @@ instance Functor ((->) r) where
 --5.2) Expresiones Aritméticas con variables
 --Dada la siguiente representación de expresiones aritméticas
 
---data Env = Map String Int
+data Reader r a = Reader (r -> a)
 
---data Exp = Sum Exp Exp | Var String | Const Int deriving (Show)
+instance Monad (Reader r) where
+  return x = Reader (\_ -> x)
+  (Reader h) >>= f = Reader $ \w -> let (Reader f') = f (h w)
+                                    in f' w
 
+ask :: Reader a a
+ask = Reader (\x -> x)
 
---Completar!!!!!!
---getValue :: String -> Env -> Int
---getValue s e = case lookup s e of
---               Nothing -> 0
---               Just v  -> v
+runReader :: Reader r a -> (r -> a)
+runReader (Reader f)  = f 
 
---completar la definición de eval :: Exp -> Reader Env Int (PENDIENTE)
+newtype Env = E [(String, Int)]
+
+data Exp = Suma Exp Exp | Var String | Const Int deriving (Show)
+
+getValue :: String -> Env -> Int
+getValue s (E xs) = case lookup s xs of Nothing -> 0
+                                        Just v  -> v
+             
+--completar la definición de eval :: Exp -> Reader Env Int
+eval :: Exp -> Reader Env Int
+eval (Const n) = return n
+eval (Var s) = do
+                 e <- ask
+                 return (getValue s e)
+eval (Suma e1 e2) = do
+                     x <- (eval e1) 
+                     y <- (eval e2)
+                     return (x+y)
+
 
 --5.3)
 --Propiedades
@@ -347,7 +370,7 @@ instance Functor ((->) r) where
 
 ----------------------------------------------------------------------------------------------------------------------------------
 
---                                                 6) WRITER
+--                                                 6) WRITER MONAD
 
 --1) Definir la siguiente función que dado un número se queda con los elementos que son mayores a éste, informando qué elementos son agregados al resultado:
 
@@ -383,9 +406,9 @@ gcd' a b = if b == 0 then a else gcd' b (a `mod` b)
 
 gcd'' :: Int -> Int -> Writer [Int] Int
 gcd'' a b =
-          do
-            tell [a, b]
-            if b == 0 then return a else gcd'' b (a `mod` b)
+           do
+             tell [a, b]
+             if b == 0 then return a else gcd'' b (a `mod` b)
 
 ----------------------------------------------------------------------------------------------------------------------------------
 
@@ -503,7 +526,8 @@ threeCoins = do
 
 
 
---7.2                                               GOBSTONES / MONAD STATE
+--                                                  GOBSTONES / MONAD STATE
+--7.2)
 --1) Dar una implementación de las operaciones de Gobstones donde el estado sea un tablero y los comandos tengan tipo State Tablero ().
 
 
