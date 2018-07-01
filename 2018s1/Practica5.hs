@@ -117,6 +117,9 @@ ntimes :: Monoid a => Int -> a -> a
 ntimes 0 x = mempty
 ntimes n x = x `mappend` ntimes (n-1) x
 
+ntimes' :: Monoid a => Int -> a -> a
+ntimes' n = mconcat . replicate n
+
 factorial' :: Int -> Int
 factorial' 1 = 1
 factorial' n = getMult ( Mult n `mappend` Mult (factorial' (n-1)) )
@@ -124,6 +127,8 @@ factorial' n = getMult ( Mult n `mappend` Mult (factorial' (n-1)) )
 sumatoria :: Int -> Int
 sumatoria 1 = 1
 sumatoria n = getSum ( Sum n `mappend` Sum (sumatoria (n-1)) )
+
+sumatoria' n = getSum (mconcat (map Sum (mconcat (replicate 1 [1..n]))))
 
 tconcat :: Monoid a => Tree a -> a
 tconcat = foldT (\ x r1 r2 -> x `mappend` r1 `mappend` r2) mempty
@@ -389,11 +394,10 @@ tell w = Writer ((), w)
 mayoresA :: Int -> [Int] -> Writer [String] [Int]
 mayoresA n = foldr g (return [])
   where g x r = if x > n
-                   then tell ["Me quedo con: " ++ show x] >> r
-                        -- es lo mismo que
-                        -- do 
-                        -- tell ["Me quedo con: " ++ show x]
-                        -- r
+                   then do
+                          tell ["Me quedo con: " ++ show x] 
+                          xs <- r
+                          return (x:xs)
                    else r
 
 --2) Dada la siguiente definición para obtener el Máximo Común Dividor
@@ -451,15 +455,15 @@ modify :: (s -> s) -> State s ()
 modify f = State (\s -> ((), f s))
 
 
-{-
+
 f'' :: State (Stack Int) Int
 f'' = do
         push 4
-        pop
-        x <- pop
+        pop'
+        x <- pop'
         return x
 
--}
+
 
 dropN :: Int -> State (Stack a) ()
 dropN 0 = return ()
@@ -477,7 +481,13 @@ takeN n = do
 
 
 push' :: a -> State (Stack a) ()
-push' x = modify (x:) 
+push' x = modify (x:)
+
+pop' :: State (Stack a) a
+pop' = do
+         s <- get
+         modify tail
+         return (head s) 
 
 incr :: State Int ()
 incr = modify (+1)
