@@ -534,7 +534,6 @@ data Tablero = T [(Int,Celda)] Int deriving (Show)
 --                  fila      cabezal
 
 
---Tenés que crear un tablero con n celdas vacías, con el cabezal parado en la celda inicial.
 tableroVacio :: Int -> Tablero
 tableroVacio n = T (fullT n 0) 0
  
@@ -582,6 +581,16 @@ nroBolitasEnCelda Negro (C n a) = n
 --           moverN(3, Der)
 --           if (puedeMover(Der)) { mover(Der) }
 -- }
+
+program''' :: State Tablero ()
+program''' = do
+               ponerNT 10 Negro
+               ponerNT 5 Azul
+               moverNT 3 Der
+               t <- get
+               if puedeMover Der t then mover Der 
+                                   else return ()
+
 
 puedeMover :: Dir -> Tablero -> Bool
 puedeMover Izq (T xs n) = n > 0
