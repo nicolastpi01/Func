@@ -1,0 +1,375 @@
+Buenas,
+
+Introducción a nuevas abstracciones
+--------------------------------------------------------
+
+Ayer arrancamos mostrando qué pudimos abstraer hasta ahora. Básicamente llegamos a poder abstraer fold, un algoritmo recursivo estructural MUY general (básicamente pudimos abstraer la recursión estructural). Y además la recursión primitiva. La pregunta es si podemos seguir abstrayendo, incluso más que sólo algoritmos, cuya técnica se reduce a parametrizar.
+
+Hablé un poco de los patrones de diseño de lenguajes orientados a objetos, y dijimos que podríamos plantear patrones de diseño funcionales, o traducir patrones de diseño POO a funcional, pero que no tenía mayor sentido, que eso lo podían intentar hacer por su cuenta. Pero eso también sería abstraer un poco más.
+
+Entonces nos enfocamos en otra cosa. ¿Qué pasa con las funciones map, mapT, mapM, mapMapa, etc.? ¿Tienen algo en común? ¿Hay propiedades comunes a ellos?
+
+Recordamos que en clase dijimos que todos los map deben cumplir:
+
+map id = id   (map mantiene la estructura del contenedor)
+map f . map g = map (f . g)   (fusión de recorridos)
+
+Ok, entonces qué tal si empezamos a analizar operaciones sobre distintos tipos de datos, que reúnen las mismas propiedades.
+
+Algo que va a pasar es que el algoritmo de cada operación va a cambiar, no es lo mismo implementar map que mapT (aunque es mecánico el proceso).
+
+Typeclasses
+--------------------------------------------------------
+
+Ahí introducimos una herramienta del lenguaje llamada typeclasses. Básicamente nos va a permitir sobrecargar operadores, o, visto de otra forma, implementar interfacez (sutilmente distintas a las interfaces de POO, pero con cosas en común).
+
+Entonces implementamos
+
+class Size a where
+  size :: a -> Int
+
+Y pregunté qué cosas tendrían tamaño. Me dijeron listas, árboles, etc.
+
+Entonces, ¿cómo se implementan instancias de ese typeclass?
+
+Así:
+
+instance Size [a] where
+   size xs = length xs
+
+instance Size (Tree a) where
+   size EmptyT = 0
+   size (NodeT x t1 t2) = 1 + size t1 + size t2
+
+Podemos observar que si bien la operación para ambas estructuras se va a llamar size, la implementación de size cambia según el tipo. Pero nos permite hacer:
+
+size (NodeT ...) = n
+
+size [1,2,3] = 3
+
+Sin precuparnos por qué operación específica va a llamar.
+
+Dije que a diferencia de POO, no estamos ejecutando una operación que el valor conoce (i.e. no lo estoy mandando un mensaje a un objeto), sino que Haskell se da cuenta qué operación específica aplicar sólo viendo el tipo.
+
+También implementamos Size para distintas representaciones sobre números (medio en el aire), por lo que no sólo los contenedores de datos tienen tamaño.
+
+Con eso vimos qué es un typeclass y cómo se implementa.
+
+Les mostré que hay una propiedad que involucra a size pero que es más una propiedad combinada con map, donde si T implementa map, entonces:
+
+size . map f = size (lo demostramos para distintas estructuras).
+
+Si bien podemos enunciar estas propiedades independientemente del tipo, cuando queramos demostrar SI tenemos que reemplazar size y map por las operaciones específicas según el tipo.
+
+Estructuras algebraicas (intro con monoides)
+----------------------------------------------------------------
+
+Entonces hablamos un poco de una rama de la matemática llamada Algebra abstracta. Básicamente lo que estudian en esa area es operaciones sobre distintos conjuntos de datos que reúnen las mismas propiedades. ¿Les suena familiar? Es exactamente lo que queremos abstraer ahora.
+
+Entonces escribí
+
+(+) :: Int -> Int -> Int
+(*) :: Int -> Int -> Int
+(++) :: [a] -> [a] -> [a]
+(&&) :: Bool -> Bool -> Bool
+(||) :: Bool -> Bool -> Bool
+
+Y empezamos a pensar qué cosas tenían en común:
+- Asociativas
+- Cerradas (toman dos parametros de un tipo y devuelven otro del mismo tipo)
+- Binarias
+- Con elemento neutro
+
+En Algebra abstracta entonces construyen el concepto de estructura algebraica, donde básicamente armar una tupla que específica un conjunto (para nosotros un tipo) y distintas operaciones y valores, sobre los que existen distintas leyes o propiedades.
+
+Esas propiedades que enunciamos son las que posee la estructura algebraica llamada Monoide, que podemos escribir así:
+
+Monoide = (T, <>, e)
+
+Donde se cumple que:
+
+x <> e = e <> x = x  (elemento neutro)
+
+x <> (y <> z) = (x <> y) <> z  (asociatividad)
+
+x :: T, y :: T, entonces x <> y :: T (operación binaria cerrada)
+
+Dijimos que <> es como size, es una operación genérica que va a generalizar a las específicas, y que "e" va a generalizar a los respectivos neutros.
+
+Es hora de implementar un typeclass:
+
+class Monoid a where
+   mempty :: a
+   mappend :: a -> a -> a
+
+Donde mappend representa a <> y mempty representa a "e", aunque existe <> como sinónimo de mappend.
+
+Básicamente
+
+<> = mappend    (cuestiones de diseño de librerías :) )
+
+Y podemos instanciar ese typeclass para los tipos que sean monoides
+
+instance Monoid Int where
+   mempty = 0
+   mappend = (+)
+
+instance Monoid Int where
+   mempty = 1
+   mappend = (*)
+
+instance Monoid [a] where
+   mempty = []
+   mappend = (++)
+
+etc...
+
+Y vimos que había un problema, en el conjunto de los números existen dos monoides, el de la suma y el de la multiplicación (lo mismo pasaba con los booleanos).
+
+Entonces tuvimos que wrapear a los Int con Sum y Prod, pero la idea era la misma.
+
+También vimos que: 
+- las funciones de (a -> a) eran monoides, y los llamamos endomorfismos.
+- las tuplas de monoides son mononides
+- los Maybe de monoides son monoides
+
+Y esto nos condujo a escribir una operación ultra general:
+
+mconcat :: Monoid o => [o] -> o
+mconcat = foldr (<>) mempty
+
+Qué básicamente significa que dada una lista de valores pertenecientes a un tipo que forma un monoide, aplicá la operación <>, hasta llegar al caso base, para reducir todo a un único valor de ese mismo tipo.
+
+Entonces, magia:
+
+mconcat [1,2,3] = 6
+
+mconcat (NodeT 1 ...) = n  (donde n es la suma de todos los valores)
+
+mconcat [ [1,2,3] , [4,5,6] ] = [1,2,3,4,5,6]
+
+mconcat (Just 5) (Just 6) = Just (5 <> 6)
+
+mconcat (True, False) (False, True) = (True <> False, False <> True)
+
+etc...
+
+O sea que tenemos un sólo nombre (sobrecargado) que nos permite escribir expresiones más genéricas que lo que veníamos haciendo, donde no nos preocupamos por la operación específica que se va a realizar.
+
+Functors
+----------------------------------------------------------------
+
+Ya habíamos visto la abstracción con map, podríamos implementar una estructura algebraica. Dicha estructura se llama Functor (hablé sobre que los nombres son inventados por matemáticos y muchos no son felices, o al menos requieren estar metido en el tema).
+
+map :: (a -> b) -> List a -> List b
+mapM :: (a -> b) -> Maybe a -> Maybe b
+mapT :: (a -> b) -> Tree a -> Tree b
+
+Entonces agarramos los distintos tipos de map y dijimos, ok, tenemos que abstraer el tipo del contenedor:
+
+fmap :: (a -> b) -> f a -> f b
+
+Donde "f" va a implementar map.
+
+class Functor f where
+    fmap :: (a -> b) -> f a -> f b
+
+Donde sus leyes son:
+
+fmap id = id
+fmap (f . g) = fmap f . fmap g
+
+Ya se imaginan las instancias.
+
+¿Hay functors más interesantes que los contenedores que vinimos implementando?
+
+instance Functor (r ->) where
+-- fmap :: (a -> b) -> (r -> a) -> (r -> b)
+   fmap f g = f . g
+
+Vimos que las funciones son de alguna forma "contenedores de su resultado", y que mapear f es equivalente a aplicar el functor g, para luego aplicar f. Básicamente es la composición de funciones:
+
+fmap f g = (.)
+
+Entonces por ejemplo
+
+fmap (+1) (*2) 5 = 11
+
+También vimos qué pasa si el constructor de tipos toma más de un parámetro de tipo:
+
+instance Functor (Either b) where
+-- fmap :: (a -> b) -> Either b a -> Either b a
+   fmap f (Left x) = Left x
+   fmap f (Right y) = Right (f y)
+
+Dijimos que se mapea el último parámetro.
+
+Y vimos en la materia que implementar map para un contenedor de datos es mecánico.
+
+Entonces vimos un mecanismo del lenguaje (medio lo vimos en ED con Show y Eq porque son de una camada donde se daba así), que nos permite derivar automáticamente el algoritmo:
+
+data Tree a = EmptyT | NodeT a (Tree a) (Tree a) deriving Functor
+
+Y no hay mucho más que decir sobre los Functor. Si les interesa investigar existen los BiFunctor y los ProFunctor, variantes de esto, con diferencias en las operaciones y propiedades.
+
+Foldable
+----------------------------------------------------------------
+
+¿Implementamos algo más que map? Sí... FOLD !!!
+
+Pero tenemos un problema, si queremos abstraer todos los fold en una sola operación no vamos a poder fácilmente, porque justamente el tipo de cada fold variaba.
+
+Entonces tenemos que elegir uno específico.
+
+Hablamos sobre recorrer linealmente las estructuras (DFS de ED), por lo que nos alcanzaría con
+
+foldr :: (a -> b -> b) -> b -> [a] -> b
+
+Y después nos preocupamos en cómo hacemos para recorrer la estructura.
+
+Mucha gente me dijo de transformarla a lista, pero el ++ es costoso.
+
+Entonces les mostré parte de la estructura algebraica:
+
+class Foldable t where
+   foldMap :: Monoid m => (a -> m) -> t a -> m
+   
+   foldr :: (a -> b -> b) -> b -> t a -> b
+
+foldr lo vimos, ¿pero foldMap? ¿Qué es?.
+
+Básicamente si la función que nos pasan para mapear devuelve un monoide, entonces agarramos los elementos, los transformamos a monoide, y aplicamos <>.
+
+Básicamente:
+
+foldMap f = foldr (mappend . f) mempty
+
+Ok, eso nos obliga a implementar foldr. Pero, foldr también viene implementado:
+
+foldr f z t = appEndo (foldMap (Endo . f) t) z
+
+Y era más difícil de entender (de hecho no expliqué su definición porque no vino al caso).
+
+Entonces pensamos, qué pasa en POO cuando tenemos una clase abstracta donde sus métodos ya vienen implementados. Tenemos que elegir de implementar uno. En el medio mostré que con Eq pasa lo mismo, ya vienen implementados == y /=, y tenemos que elegir cuál definir.
+
+Les pregunté que cuál elegirían para implementar y obviamente dijeron foldMap, porque se nota que parece más simple.
+
+Entonces lo hicimos para árboles:
+
+instance Foldable Tree where
+   foldMap f Empty = mempty
+   foldMap f (Node x l r) =
+   foldMap f l <> f x <> foldMap f r
+   
+   ...
+
+MUY mecánico, se ve inmediatamente el patrón.
+
+Bueno Haskell tiene
+
+data Tree a = Empty | Node a (Tree a) (Tree a) deriving Foldable
+
+Hablamos sobre que en un parcial algo así no va a existir, simplemente sirve para cuando desarrollen software, y también hablamos sobre el poder que esto posee, ningún lenguaje escribe código por mi, a lo sumo lo hacen los IDEs como eclipse, que me autocompletan código.
+
+Además se garantiza que la implementación de Foldable cumple con las leyes (que mostré, y eran complejas si hay que demostrarlas).
+
+Y finalmente vimos que todo esto viene implementado en el typeclass de foldable:
+
+foldr' :: (a -> b -> b) -> b -> t a -> b
+foldl' :: (b -> a -> b) -> b -> t a -> b
+foldr1 :: (a -> a -> a) -> t a -> a
+foldl1 :: (a -> a -> a) -> t a -> a
+toList :: t a -> [a]
+null :: t a -> Bool
+length :: t a -> Int
+elem :: Eq a => a -> t a -> Bool
+maximum :: forall a . Ord a => t a -> a
+minimum :: forall a . Ord a => t a -> a
+sum :: Num a => t a -> a
+product :: Num a => t a -> a
+and :: Foldable t => t Bool -> Bool
+or :: Foldable t => t Bool -> Bool
+any :: Foldable t => (a -> Bool) -> t a -> Bool
+all :: Foldable t => (a -> Bool) -> t a -> Bool
+find :: Foldable t => (a -> Bool) -> t a -> Maybe a
+maximumBy :: Foldable t => (a -> a -> Ordering) -> t a -> a
+minimumBy :: Foldable t => (a -> a -> Ordering) -> t a -> a
+
+O sea.. parte de la práctica 1 y 1 bis. Y se lamentaron porque les hicimos escribir mucho en su momento.
+
+Ejecutamos ejemplos de esto en un editor con un intérprete (de GHC dicho sea de paso). Derivamos Foldable y Functor para la estructura del parcial, y vimos que ya nos venían gratis varias operaciones que tuvieron que implementar. Otras como las 3 últimas no, pero que se resolvían usando fold, lo cual no era complejo.
+
+Dualidad y leyes de De Morgan
+----------------------------------------------------------------
+
+Luego de un break vimos una estructura más. Llamada Dual:
+
+class Dual a where
+   opuesto :: a -> a
+
+Que posee una sola ley:
+opuesto . opuesto = id
+
+Ejemplos de esto son:
+
+(Bool, not)
+(Int, negate)
+(Dual a => [a], reverse . map opuesto)
+((Dual a, Dual b) => Dual (a -> b), opuesto . f . opuesto)
+
+Demostramos que lo último implementa bien Dual.
+
+Y dado eso, como corolario, tenemos estas propiedades:
+
+opuesto (f x) = (opuesto f) (opuesto x)
+opuesto (f . g) = opuesto f . opuesto g
+
+Entonces hicimos:
+
+opuesto max 3 5
+= { LEMA ... }
+opuesto (max (opuesto 3) (opuesto 5))
+= { def opuesto para Int }
+opuesto (max (-3) (-5))
+= { def max }
+opuesto (-3)
+== { def opuesto para Int }
+3
+
+Y vimos que eso calculaba min, entonces:
+
+min = opuesto max
+
+Y hablamos sobre que los programadores de Haskell quieren programar lo menos posible (esto también debería ser el objetivo de todo progamador).
+
+O sea que definen max y listo, ya tienen min. (No es del todo cierto por el tipo general de max, pero podemos pensar que sí para muchos tipos de datos).
+
+Y vimos con ejemplos que
+
+last = opuesto head
+init = opuesto tail
+opuesto (++) = flip (++)
+(||) = opuesto (&&)
+(&&) = opuesto (||)
+
+Si la operacion es conmutativa:
+opuesto (+) = (+)
+
+Y no vimos foldl pero dijimos que "recorre en sentido inverso a foldr" y por consiguiente:
+
+foldl = foldl' = opuesto foldr' . flip
+
+Necesito flip por el tipo de foldl, pero no importa, es un detalle, hay que concentrarse en la parte de opuesto.
+
+Parcial
+----------------------------------------------------------------
+
+Sobre el final de la clase hablamos sobre el parcial y partes de su solución. 
+
+Los reté porque realmente era fácil porque habíamos hecho una infinidad de cosas similares en clase. Pero no toman apuntes y no llevan el material al examen, que es a LIBRO ABIERTO.
+
+Dije que esta parte de la materia es para los interesados en aprender o los que necesitan nota para promocionar. Que el ejercicio de mónadas suma un punto, que el recuperatorio tiene mónadas, y que el integrador tiene mónadas y lambda cálculo.
+
+Cada uno sabrá más o menos en qué situación se encuentra, aunque lo va a saber mejor luego de dar las notas.
+
+
