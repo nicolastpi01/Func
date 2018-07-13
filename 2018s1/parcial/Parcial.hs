@@ -5,8 +5,8 @@
 
 -- MAPA
 
--- Representaremos un mapa donde se van presentando objetos. Existen cofres en los finales de caminos, puntos que no poseen objetos, y -- bifurcaciones con objetos, y dos caminos posibles. Además existen direcciones para recorrer el mapa: Left (izquierda), Right (derecha), 
--- Straight (centro). Un camino [Dir] en este mapa representa un camino desde la raiz del mapa hasta un cofre. Las definiciones de tipo son las 
+-- Representaremos un mapa donde se van presentando objetos. Existen cofres en los finales de caminos, puntos que no poseen objetos, y -- bifurcaciones con objetos, y dos caminos posibles. Además existen direcciones para recorrer el mapa: Left (izquierda), Right (derecha),
+-- Straight (centro). Un camino [Dir] en este mapa representa un camino desde la raiz del mapa hasta un cofre. Las definiciones de tipo son las
 -- sig:
 
 data Dir = Left' | Right' | Straight deriving (Show)
@@ -26,7 +26,7 @@ mapM' f (Nada m) = Nada (mapM' f m)
 mapM' f (Bifurcacion xs m1 m2) = Bifurcacion (map f xs) (mapM' f m1) (mapM' f m2)
 
 hasObjectAt :: (a -> Bool) -> Mapa a -> [Dir] -> Bool
-hasObjectAt f (Cofre xs) [] = any f xs   
+hasObjectAt f (Cofre xs) [] = any f xs
 hasObjectAt f (Nada m) [] = False
 hasObjectAt f (Nada m) (Straight:ds) = hasObjectAt f m ds
 hasObjectAt f (Bifurcacion xs m1 m2) [] = False
@@ -39,24 +39,24 @@ longestPath :: Mapa a -> [Dir]
 longestPath (Cofre xs) = []
 longestPath (Nada m) = Straight : (longestPath m)
 longestPath (Bifurcacion xs m1 m2) = let (zs,ys) = (longestPath m1,longestPath m2)
-                                     in if length zs >= length ys then Left' : (longestPath m1) 
-                                                                  else Right' : (longestPath m2)
+                                     in if length zs >= length ys then Left' : zs
+                                                                  else Right' : ys
 
 objectsOfLongestPath :: Mapa a -> [a]
 objectsOfLongestPath (Cofre xs) = xs
-objectsOfLongestPath (Nada m) = objectsOfLongestPath m 
+objectsOfLongestPath (Nada m) = objectsOfLongestPath m
 objectsOfLongestPath (Bifurcacion xs m1 m2) = let (zs,ys) = (longestPath m1,longestPath m2)
-                                              in if length zs >= length ys then xs ++ (objectsOfLongestPath m1)  
+                                              in if length zs >= length ys then xs ++ (objectsOfLongestPath m1)
                                                                            else xs ++ (objectsOfLongestPath m2)
 
 
 allPaths :: Mapa a -> [[Dir]]
 allPaths (Cofre xs) = [[]]
 allPaths (Nada m) = map (Straight:) (allPaths m)
-allPaths (Bifurcacion xs m1 m2) = (map (Left':) (allPaths m1)) ++ 
+allPaths (Bifurcacion xs m1 m2) = (map (Left':) (allPaths m1)) ++
                                   (map (Right':) (allPaths m2))
 
-                            
+
 
 -- 2) Dar tipo y definir foldM y recMm una versión de fold y recursión primitiva, respectivamente para la estrcutura de Mapa.
 
@@ -64,13 +64,13 @@ foldM :: ([a] -> b) -> (b -> b) -> ([a] -> b -> b -> b) -> Mapa a -> b
 foldM f z g (Cofre xs) = f xs
 foldM f z g (Nada m) = z (foldM f z g m)
 foldM f z g (Bifurcacion xs m1 m2) = g xs (foldM f z g m1) (foldM f z g m2)
- 
+
 
 recM :: ([a] -> b) -> (b -> Mapa a -> b) -> ([a] -> Mapa a -> Mapa a -> b  -> b -> b) -> Mapa a -> b
 recM f z g (Cofre xs) = f xs
 recM f z g (Nada m) = z (recM f z g m) m
 recM f z g (Bifurcacion xs m1 m2) = g xs m1 m2 (recM f z g m1) (recM f z g m2)
- 
+
 
 -- 3) Definir las funciones del primer punto usando foldM y recM, según corresponda.
 
@@ -96,14 +96,14 @@ hasObjectAt' f m ds = foldM g h j m ds
 longestPath' :: Mapa a -> [Dir]
 longestPath' = foldM (const []) (\r -> Straight : r) g
                                              where g xs r1 r2 = let (zs,ys) = (r1,r2)
-                                                                in if length zs >= length ys then Left' : r1 
+                                                                in if length zs >= length ys then Left' : r1
                                                                                              else Right' : r2
 
-                                                                         
+
 objectsOfLongestPath' :: Mapa a -> [a]
 objectsOfLongestPath' = recM id (\ r m -> r) g
                               where g xs m1 m2 r1 r2 = let (zs,ys) = (longestPath m1, longestPath m2)
-                                                 in if length zs >= length ys then xs ++ r1  
+                                                 in if length zs >= length ys then xs ++ r1
                                                                               else xs ++ r2
 
 
@@ -137,7 +137,7 @@ allPaths' = foldM (\ xs -> [[]]) (\r -> map (Straight:) r) (\ xs r1 r2 -> (map (
 -- length xs
 
 
--- Caso inductivo, (m = Nada m1) || (m = Nada m2) || (m = Bifurcacion xs m1 m2)    
+-- Caso inductivo, (m = Nada m1) || (m = Nada m2) || (m = Bifurcacion xs m1 m2)
 
 -- HI)
 -- 2) length (objects m2) = countObjects m2
@@ -197,40 +197,40 @@ allPaths' = foldM (\ xs -> [[]]) (\r -> map (Straight:) r) (\ xs r1 r2 -> (map (
 -- Suponer ya demostrada la sig. propiedad = Para todo x, as, bs : elem x (as ++ bs) = elem x as || elem x bs
 -- b) elem x . objects = hasObjectAt (==x)
 
-elem x . objects = hasObjectAt (==x)
-                                              = ppio extensionalidad
-(elem x . objects) m = hasObjectAt (==x) m
-                                              = ppio extensionalidad
-(elem x . objects) m = hasObjectAt (==x) m xs
-                                              = def (.)
-elem x (objects m) = hasObjectAt (==x) m xs
+--elem x . objects = hasObjectAt (==x)
+--                                              = ppio extensionalidad
+--(elem x . objects) m = hasObjectAt (==x) m
+--                                              = ppio extensionalidad
+--(elem x . objects) m = hasObjectAt (==x) m xs
+--                                              = def (.)
+--elem x (objects m) = hasObjectAt (==x) m xs
 
-Demuestro por inducción estructural en m para todo m
+--Demuestro por inducción estructural en m para todo m
 
-Caso base, m = (Cofre xs)
+--Caso base, m = (Cofre xs)
 
-elem x (objects (Cofre xs))
-                                 = def objects
-elem x xs
+--elem x (objects (Cofre xs))
+--                                 = def objects
+--elem x xs
 
-hasObjectAt (==x) (Cofre xs) xs
-                                 = def hasObjectAt
+--hasObjectAt (==x) (Cofre xs) xs
+--                                 = def hasObjectAt
 
 
 
 -- c) length . map f . map g . objects = countObjects . mapM (f . g)
-             
 
 
 
-hasObjectAt :: (a -> Bool) -> Mapa a -> [Dir] -> Bool
-hasObjectAt f (Cofre xs) [] = any f xs   
-hasObjectAt f (Nada m) [] = False
-hasObjectAt f (Nada m) (Straight:ds) = hasObjectAt f m ds
-hasObjectAt f (Bifurcacion xs m1 m2) [] = False
-hasObjectAt f (Bifurcacion xs m1 m2) (Straight:ds) = any f xs
-hasObjectAt f (Bifurcacion xs m1 m2) (Left':ds) = hasObjectAt f m1 ds
-hasObjectAt f (Bifurcacion xs m1 m2) (Right':ds) = hasObjectAt f m2 ds
+
+--hasObjectAt :: (a -> Bool) -> Mapa a -> [Dir] -> Bool
+--hasObjectAt f (Cofre xs) [] = any f xs
+--hasObjectAt f (Nada m) [] = False
+--hasObjectAt f (Nada m) (Straight:ds) = hasObjectAt f m ds
+--hasObjectAt f (Bifurcacion xs m1 m2) [] = False
+--hasObjectAt f (Bifurcacion xs m1 m2) (Straight:ds) = any f xs
+--hasObjectAt f (Bifurcacion xs m1 m2) (Left':ds) = hasObjectAt f m1 ds
+--hasObjectAt f (Bifurcacion xs m1 m2) (Right':ds) = hasObjectAt f m2 ds
 
 --countObjects (Cofre xs) = length xs
 --countObjects (Nada m) = countObjects m
@@ -245,9 +245,3 @@ hasObjectAt f (Bifurcacion xs m1 m2) (Right':ds) = hasObjectAt f m2 ds
 --mapM' f (Cofre xs) = Cofre (map f xs)
 --mapM' f (Nada m) = Nada (mapM' f m)
 --mapM' f (Bifurcacion xs m1 m2) = Bifurcacion (map f xs) (mapM' f m1) (mapM' f m2)
-
- 
-
-
-
-

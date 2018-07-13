@@ -25,6 +25,12 @@ maxTT :: Ord a => ThreeT a -> a
 maxTT (Leaf x) = x
 maxTT (Branch x t1 t2 t3) = max x (max (maxTT t1) (max (maxTT t2) (maxTT t3)))
 
+maxTT'' :: Ord a => ThreeT a -> a
+maxTT'' (Leaf x) = x
+maxTT'' (Branch x t1 t2 t3) = let m1 = x `max` (maxTT'' t1)
+                             in let m2 = m1 `max` (maxTT'' t2)
+                                in m2 `max` (maxTT'' t3)
+
 findTT :: Eq a => (a -> Bool) -> ThreeT (a,b) -> Maybe b
 findTT f (Leaf (x,y)) = if f x then Just y else Nothing 
 findTT f (Branch (x,y) t1 t2 t3) = if f x then Just y else g (findTT f t1) (findTT f t2) (findTT f t3)
@@ -33,6 +39,7 @@ findTT f (Branch (x,y) t1 t2 t3) = if f x then Just y else g (findTT f t1) (find
                                    g m1 (Just x) m3 = Just x
                                    g m1 m2 (Just x) = Just x
                                    g m1 m2 m3 = Nothing
+
 
 
 levelNTT :: Int -> ThreeT a -> [a]
