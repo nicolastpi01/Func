@@ -106,9 +106,9 @@ while exp mx = do
                  if (exp t) then mx >> (while exp mx) 
                             else return ()
 
-hayBolitas :: Exp Bool
+--hayBolitas :: Exp Bool
 --Indica si la celda actual posee bolitas
-hayBolitas = (\ t -> nroBolitas t > 0)
+--hayBolitas = (\ t -> nroBolitas t > 0)
 
 
 irAlExtremo :: Dir -> Command
